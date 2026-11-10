@@ -27,6 +27,7 @@ const els = {
   outbox: document.querySelector('#outbox-list'),
   inCount: document.querySelector('#in-count'),
   outCount: document.querySelector('#out-count'),
+  refreshInbox: document.querySelector('#refresh-inbox'),
   toastStack: document.querySelector('#toast-stack')
 };
 
@@ -409,4 +410,11 @@ setUser(queryUser || storedUser || 'Alice');
 loadCatalog();
 connectStream();
 checkHealth();
+els.refreshInbox.addEventListener('click', async () => {
+  els.refreshInbox.disabled = true;
+  await loadHistory();
+  els.refreshInbox.disabled = false;
+  toast('Inbox refreshed.', 'info');
+});
+setInterval(loadHistory, 10000);
 setInterval(checkHealth, 20000);

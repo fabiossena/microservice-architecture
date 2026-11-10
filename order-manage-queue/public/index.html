@@ -25,6 +25,18 @@
   </header>
 
   <main class="layout">
+    <section class="card customer-board-card">
+      <div class="card-heading compact">
+        <div>
+          <span class="eyebrow">Customer forms</span>
+          <h2>Message each customer</h2>
+          <p class="hint">One column per customer. Each form refreshes automatically every 10 seconds.</p>
+        </div>
+        <button id="refresh-board" class="btn ghost" type="button">Refresh all</button>
+      </div>
+      <div id="customer-board" class="customer-board"></div>
+    </section>
+
     <section class="column left">
       <div class="card">
         <div class="card-heading compact">

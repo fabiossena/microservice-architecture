@@ -31,7 +31,7 @@ docker compose down -v   # deletes volumes (SQLite + RabbitMQ)
 
 1. Open two customer windows: `?user=Alice` and `?user=Bob`.
 2. Place an order in each one (the same item may run out if repeated many times).
-3. Open operations and select a customer message.
+3. Open operations: each customer has its own column with a message form, refresh button, and 10-second auto-refresh.
 4. Try:
    - **Approve order** before automatic approval;
    - **Cancel order** and watch stock/refund/delivery;

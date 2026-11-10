@@ -13,7 +13,7 @@ Everything runs locally with **Docker Compose + RabbitMQ + SQLite**. Each micros
 | Component | Responsibility | Port |
 |---|---|---|
 | `order-user` | Customer portal. Independent tabs per user, order actions, inbound/outbound messages with timestamps. | 8081 |
-| `order-manage-queue` | Operations center. Receives customer actions, supports approve/cancel/refund/dispatch/restock and replies. | 8082 |
+| `order-manage-queue` | Operations center. Receives customer actions, supports approve/cancel/refund/dispatch/restock, and provides one message form per customer with a 10s auto-refresh. | 8082 |
 | `orders-service` | Owner of the order lifecycle. | 8091 |
 | `payments-service` | Simulated payment acquirer with an approval limit. | 8092 |
 | `delivery-service` | Courier assignment, dispatch, and delivery completion. | 8093 |
@@ -60,7 +60,7 @@ The first start pulls images and installs dependencies for each service. Once al
 2. Open another window as **Bob**: <http://localhost:8071/?user=Bob>
 3. Open the operations center: <http://localhost:8072>
 4. Place an order in each customer window.
-5. In operations, click **Use this context** on a customer message and use the reply buttons.
+5. In operations, use the per-customer columns at the top to send messages, or click **Use this context** on a customer message for the detailed queue.
 6. Watch notifications arrive in each tab with message text and timestamps.
 7. Inspect queues and messages at <http://localhost:15672>.
 

@@ -175,6 +175,16 @@ export function createManagerServer({
       }
 
       if (url.pathname === '/api/messages' && req.method === 'GET') {
+        const user = url.searchParams.get('user');
+        if (user) {
+          const target = String(user).trim().slice(0, 40);
+          if (target.length < 2) {
+            json(res, 400, { error: 'Invalid user' });
+            return;
+          }
+          json(res, 200, { items: db.listForUser(target, 100) });
+          return;
+        }
         const category = url.searchParams.get('category');
         const items = category && ['user', 'system', 'sent'].includes(category)
           ? db.listByCategory(category, 200)

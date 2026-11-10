@@ -144,6 +144,7 @@ messages(...)  -- one copy per view
 ### order-manage-queue
 
 - Consumes `user.#` for the "Customer messages" tab and the remaining domain events for "System events".
+- The top customer board renders one column per customer, each with its own message history, reply form, refresh button, and 10-second auto-refresh.
 - "Use this context" fills the user and order from the selected message.
 - Replies go through notify-service, ensuring the same delivery path as the customer.
 - Restock and general announcements are broadcasts.

@@ -37,6 +37,12 @@ export function createDb(dataDir) {
   const categoryStmt = db.prepare(
     'SELECT * FROM messages WHERE category = ? ORDER BY occurred_at DESC LIMIT ?'
   );
+  const userStmt = db.prepare(`
+    SELECT * FROM messages
+    WHERE user = ? OR (user = '*' AND direction = 'in')
+    ORDER BY occurred_at DESC
+    LIMIT ?
+  `);
 
   function hydrate(row) {
     return {
@@ -80,6 +86,10 @@ export function createDb(dataDir) {
 
     listByCategory(category, limit = 200) {
       return categoryStmt.all(category, limit).map(hydrate);
+    },
+
+    listForUser(user, limit = 100) {
+      return userStmt.all(user, limit).map(hydrate);
     },
 
     close() {

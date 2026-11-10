@@ -4,7 +4,10 @@
   orderId: '',
   messages: [],
   filter: 'user',
-  catalog: []
+  catalog: [],
+  customers: ['Alice', 'Bob', 'Carol', 'Daniel', 'Emma'],
+  customerData: {},
+  drafts: {}
 };
 
 const els = {
@@ -23,6 +26,8 @@ const els = {
   restockSku: document.querySelector('#restock-sku'),
   restockQuantity: document.querySelector('#restock-quantity'),
   catalogHint: document.querySelector('#catalog-hint'),
+  customerBoard: document.querySelector('#customer-board'),
+  refreshBoard: document.querySelector('#refresh-board'),
   toastStack: document.querySelector('#toast-stack')
 };
 
@@ -133,7 +138,11 @@ function mergeMessage(item) {
   if (state.messages.some((existing) => existing.id === item.id)) return false;
   state.messages.unshift(item);
   if (state.messages.length > 500) state.messages.length = 500;
+
+  const isNewCustomer = item.user && item.user !== '*' ? ensureCustomer(item.user) : false;
   render();
+  applyMessageToBoard(item);
+  if (isNewCustomer) loadCustomer(item.user);
   return true;
 }
 
@@ -240,6 +249,251 @@ function messageCard(item) {
   return card;
 }
 
+function ensureCustomer(rawName) {
+  const name = String(rawName || '').trim().slice(0, 40);
+  if (name.length < 2) return false;
+  if (state.customers.includes(name)) return false;
+  state.customers.push(name);
+  return true;
+}
+
+function discoverCustomers() {
+  for (const item of state.messages) {
+    if (item.user && item.user !== '*') ensureCustomer(item.user);
+  }
+}
+
+function getCustomerCard(name) {
+  return [...els.customerBoard.children].find((card) => card.dataset.user === name);
+}
+
+function createCustomerCard(name) {
+  const card = document.createElement('article');
+  card.className = 'customer-card';
+  card.dataset.user = name;
+
+  const head = document.createElement('div');
+  head.className = 'customer-head';
+
+  const identity = document.createElement('div');
+  identity.className = 'customer-identity';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'customer-avatar';
+  avatar.textContent = name.charAt(0);
+
+  const info = document.createElement('div');
+  info.style.minWidth = '0';
+  const title = document.createElement('div');
+  title.className = 'customer-name';
+  title.textContent = name;
+  const meta = document.createElement('div');
+  meta.className = 'customer-meta';
+  const status = document.createElement('span');
+  status.className = 'customer-status';
+  status.textContent = 'Loading messages...';
+  meta.appendChild(status);
+  info.append(title, meta);
+  identity.append(avatar, info);
+
+  const refresh = document.createElement('button');
+  refresh.type = 'button';
+  refresh.className = 'btn ghost customer-refresh';
+  refresh.textContent = 'Refresh';
+  refresh.addEventListener('click', async () => {
+    refresh.disabled = true;
+    await loadCustomer(name);
+    refresh.disabled = false;
+  });
+
+  head.append(identity, refresh);
+
+  const list = document.createElement('div');
+  list.className = 'customer-messages';
+
+  const form = document.createElement('form');
+  form.className = 'customer-reply-form';
+  const textarea = document.createElement('textarea');
+  textarea.maxLength = 500;
+  textarea.rows = 2;
+  textarea.placeholder = `Message to ${name}...`;
+  textarea.value = state.drafts[name] || '';
+  textarea.addEventListener('input', () => {
+    state.drafts[name] = textarea.value;
+  });
+  const send = document.createElement('button');
+  send.type = 'submit';
+  send.className = 'btn primary';
+  send.textContent = 'Send message';
+  form.append(textarea, send);
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    sendCustomerMessage(name, textarea, send);
+  });
+
+  const updated = document.createElement('div');
+  updated.className = 'customer-updated';
+  updated.textContent = 'Auto-refresh 10s';
+
+  card.append(head, list, form, updated);
+  return card;
+}
+
+function updateCustomerCard(card, name) {
+  const data = state.customerData[name];
+  const status = card.querySelector('.customer-status');
+  const list = card.querySelector('.customer-messages');
+  const updated = card.querySelector('.customer-updated');
+
+  if (!data) {
+    status.textContent = 'Waiting for messages...';
+  } else if (data.loading) {
+    status.textContent = 'Refreshing...';
+  } else if (data.error) {
+    status.textContent = 'Refresh failed';
+  } else {
+    status.textContent = `${data.items.length} message(s) · auto 10s`;
+  }
+
+  if (data?.updatedAt) {
+    updated.textContent = `Updated ${new Date(data.updatedAt).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })} · auto 10s`;
+  }
+
+  const items = data?.items || [];
+  list.replaceChildren();
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'customer-empty';
+    empty.textContent = data?.error
+      ? `Could not refresh: ${data.error}`
+      : `No messages for ${name} yet.`;
+    list.appendChild(empty);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  for (const item of items.slice(0, 30)) {
+    const row = document.createElement('div');
+    row.className = `customer-msg ${
+      item.direction === 'out' ? 'outbound' : item.category === 'system' ? 'system' : ''
+    }`;
+
+    const head = document.createElement('div');
+    head.className = 'customer-msg-head';
+    const title = document.createElement('span');
+    title.className = 'customer-msg-title';
+    title.textContent = messageTitle(item);
+    const time = document.createElement('time');
+    time.className = 'customer-msg-time';
+    time.textContent = formatDate(item.occurredAt);
+    head.append(title, time);
+
+    const text = document.createElement('p');
+    text.className = 'customer-msg-text';
+    text.textContent = item.message;
+
+    row.append(head, text);
+    fragment.appendChild(row);
+  }
+  list.appendChild(fragment);
+}
+
+function renderCustomerBoard() {
+  const names = new Set(state.customers);
+  for (const card of [...els.customerBoard.children]) {
+    if (!names.has(card.dataset.user)) card.remove();
+  }
+
+  for (const name of state.customers) {
+    let card = getCustomerCard(name);
+    if (!card) {
+      card = createCustomerCard(name);
+      els.customerBoard.appendChild(card);
+    }
+    updateCustomerCard(card, name);
+  }
+}
+
+async function loadCustomer(name) {
+  const previous = state.customerData[name];
+  state.customerData[name] = {
+    items: previous?.items || [],
+    updatedAt: previous?.updatedAt || null,
+    loading: true,
+    error: null
+  };
+  renderCustomerBoard();
+
+  try {
+    const response = await fetch(`api/messages?user=${encodeURIComponent(name)}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    state.customerData[name] = {
+      items: data.items || [],
+      updatedAt: Date.now(),
+      loading: false,
+      error: null
+    };
+  } catch (err) {
+    state.customerData[name] = {
+      items: previous?.items || [],
+      updatedAt: previous?.updatedAt || null,
+      loading: false,
+      error: err.message
+    };
+  }
+  renderCustomerBoard();
+}
+
+async function refreshAllCustomers() {
+  discoverCustomers();
+  renderCustomerBoard();
+  await Promise.all(state.customers.map((name) => loadCustomer(name)));
+}
+
+function applyMessageToBoard(item) {
+  let targets;
+  if (item.user && item.user !== '*') {
+    ensureCustomer(item.user);
+    targets = [item.user];
+  } else {
+    targets = [...state.customers];
+  }
+
+  for (const name of targets) {
+    const data = state.customerData[name];
+    if (!data) continue;
+    if (data.items.some((existing) => existing.id === item.id)) continue;
+    data.items.unshift(item);
+    data.items.sort((a, b) => new Date(b.occurredAt) - new Date(a.occurredAt));
+    if (data.items.length > 100) data.items.length = 100;
+    data.updatedAt = Date.now();
+  }
+  renderCustomerBoard();
+}
+
+async function sendCustomerMessage(name, textarea, button) {
+  saveContext();
+  const message = textarea.value.trim();
+  if (message.length < 2) {
+    toast(`Write a message to ${name}.`, 'error');
+    textarea.focus();
+    return;
+  }
+
+  const success = await sendAction('reply-user', { targetUser: name, message }, button);
+  if (!success) return;
+
+  state.drafts[name] = '';
+  textarea.value = '';
+  await loadCustomer(name);
+}
+
 function render() {
   const counts = { user: 0, system: 0, sent: 0 };
   for (const item of state.messages) counts[item.category] = (counts[item.category] || 0) + 1;
@@ -299,7 +553,11 @@ async function loadMessages() {
     if (!response.ok) throw new Error('Failed to load the queue');
     const data = await response.json();
     state.messages = data.items || [];
+    const known = new Set(state.customers);
+    discoverCustomers();
     render();
+    const discovered = state.customers.filter((name) => !known.has(name));
+    for (const name of discovered) loadCustomer(name);
   } catch (err) {
     toast(err.message, 'error');
   }
@@ -339,9 +597,10 @@ async function sendAction(action, payload, button) {
     if (!response.ok) throw new Error(data.error || 'Failed to send command');
     mergeMessage(data.item);
     toast('Command published to the return queue.', 'info');
-    if (action === 'reply-user' || action === 'broadcast') els.reply.value = '';
+    return true;
   } catch (err) {
     toast(err.message, 'error');
+    return false;
   } finally {
     button?.classList.remove('busy');
     if (button) button.disabled = false;
@@ -359,7 +618,9 @@ document.querySelectorAll('[data-manage-action]').forEach((button) => {
         toast('Write the general announcement.', 'error');
         return;
       }
-      sendAction(action, { message }, button);
+      sendAction(action, { message }, button).then((ok) => {
+        if (ok) els.reply.value = '';
+      });
       return;
     }
 
@@ -370,7 +631,9 @@ document.querySelectorAll('[data-manage-action]').forEach((button) => {
         toast('Write the reply message.', 'error');
         return;
       }
-      sendAction(action, { targetUser: state.targetUser, message }, button);
+      sendAction(action, { targetUser: state.targetUser, message }, button).then((ok) => {
+        if (ok) els.reply.value = '';
+      });
       return;
     }
 
@@ -440,4 +703,12 @@ loadMessages();
 loadCatalog();
 connectStream();
 checkHealth();
+renderCustomerBoard();
+refreshAllCustomers();
+els.refreshBoard.addEventListener('click', async () => {
+  els.refreshBoard.disabled = true;
+  await refreshAllCustomers();
+  els.refreshBoard.disabled = false;
+});
+setInterval(refreshAllCustomers, 10000);
 setInterval(checkHealth, 20000);
