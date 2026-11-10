@@ -1,0 +1,19 @@
+{
+  "name": "notify-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Serviço de notificações orientado a eventos",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.5"
+  }
+}

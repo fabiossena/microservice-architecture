@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orders Lab · Cliente</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">OL</div>
+      <div>
+        <strong>Orders Lab</strong>
+        <span>Portal do cliente · microsserviços</span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="connection" class="status-pill offline" title="Conexão em tempo real">
+        <span class="dot"></span><span id="connection-label">Conectando</span>
+      </span>
+      <button id="new-window" class="btn ghost" type="button">Abrir outra janela</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="column left">
+      <div class="card identity-card">
+        <div class="card-heading">
+          <div>
+            <span class="eyebrow">Sessão do cliente</span>
+            <h1 id="welcome">Olá, Ana</h1>
+          </div>
+          <div class="avatar" id="avatar">A</div>
+        </div>
+        <form id="user-form" class="user-form" autocomplete="off">
+          <label for="user-input">Nome do usuário</label>
+          <div class="input-row">
+            <input id="user-input" name="user" list="user-suggestions" maxlength="40" placeholder="Ex.: Ana" required />
+            <datalist id="user-suggestions">
+              <option value="Ana"></option>
+              <option value="Bruno"></option>
+              <option value="Carla"></option>
+              <option value="Diego"></option>
+              <option value="Elena"></option>
+            </datalist>
+            <button class="btn primary" type="submit">Entrar</button>
+          </div>
+          <p class="hint">Cada aba pode usar um nome diferente. Abra outra janela para simular outro cliente.</p>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="card-heading compact">
+          <div>
+            <span class="eyebrow">Ação do cliente</span>
+            <h2>Novo pedido</h2>
+          </div>
+        </div>
+        <div class="field">
+          <label for="item-select">Item do catálogo</label>
+          <select id="item-select"></select>
+          <p class="hint" id="catalog-hint">Carregando catálogo...</p>
+        </div>
+        <div class="field">
+          <label for="quantity">Quantidade</label>
+          <input id="quantity" type="number" min="1" max="99" value="1" />
+        </div>
+        <button id="place-order" class="btn accent wide" type="button">Fazer pedido</button>
+        <div class="order-reference">
+          <span>Código do pedido em foco</span>
+          <div class="input-row small">
+            <input id="order-id" maxlength="80" placeholder="Ainda não há pedido" />
+            <span class="copy-chip" id="order-id-short">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-heading compact">
+          <div>
+            <span class="eyebrow">Comandos publicados</span>
+            <h2>Ações do usuário</h2>
+          </div>
+        </div>
+        <div class="action-grid">
+          <button class="btn" data-action="check-status" type="button">Consultar status</button>
+          <button class="btn" data-action="cancel-order" type="button">Cancelar pedido</button>
+          <button class="btn" data-action="retry-payment" type="button">Tentar pagamento</button>
+          <button class="btn" data-action="delivery-eta" type="button">Previsão de entrega</button>
+          <button class="btn" data-action="check-stock" type="button">Consultar estoque</button>
+          <button class="btn" data-action="complaint" type="button">Falar com a operação</button>
+        </div>
+        <div class="field">
+          <label for="complaint-text">Mensagem para a operação</label>
+          <textarea id="complaint-text" rows="3" maxlength="500" placeholder="Descreva sua solicitação..."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="column right">
+      <div class="queue-header">
+        <div>
+          <span class="eyebrow">Mensageria em tempo real</span>
+          <h2>Minha caixa de mensagens</h2>
+        </div>
+        <div class="queue-counts">
+          <span class="count-chip"><strong id="in-count">0</strong> recebidas</span>
+          <span class="count-chip"><strong id="out-count">0</strong> enviadas</span>
+        </div>
+      </div>
+
+      <div class="queues">
+        <div class="card queue-card">
+          <div class="queue-title">
+            <h3>Recebidas</h3>
+            <span class="queue-tag">consumo · notification.created</span>
+          </div>
+          <div id="inbox-list" class="message-list"></div>
+        </div>
+        <div class="card queue-card">
+          <div class="queue-title">
+            <h3>Enviadas</h3>
+            <span class="queue-tag">publicação · filas dos serviços</span>
+          </div>
+          <div id="outbox-list" class="message-list"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+  <script src="app.js" type="module"></script>
+</body>
+</html>

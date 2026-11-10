@@ -1,0 +1,139 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orders Lab · Operação</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="manage-page">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark admin">OP</div>
+      <div>
+        <strong>Orders Lab</strong>
+        <span>Central da operação · filas e respostas</span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="connection" class="status-pill offline" title="Conexão em tempo real">
+        <span class="dot"></span><span id="connection-label">Conectando</span>
+      </span>
+      <a class="btn ghost" href="http://localhost:8071" target="_blank" rel="noopener">Portal do cliente</a>
+      <a class="btn ghost" href="http://localhost:8070" target="_blank" rel="noopener">Dashboard</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="column left">
+      <div class="card">
+        <div class="card-heading compact">
+          <div>
+            <span class="eyebrow">Contexto de atendimento</span>
+            <h1>Responder operação</h1>
+          </div>
+          <span class="live-tag"><span class="dot"></span> ao vivo</span>
+        </div>
+
+        <div class="field">
+          <label for="operator">Operador</label>
+          <input id="operator" maxlength="40" placeholder="Ex.: Operação" />
+        </div>
+        <div class="field">
+          <label for="target-user">Usuário de destino</label>
+          <div class="input-row">
+            <input id="target-user" list="target-users" maxlength="40" placeholder="Nome do cliente" />
+            <datalist id="target-users">
+              <option value="Ana"></option>
+              <option value="Bruno"></option>
+              <option value="Carla"></option>
+              <option value="Diego"></option>
+              <option value="Elena"></option>
+            </datalist>
+          </div>
+        </div>
+        <div class="field">
+          <label for="order-id">Código do pedido</label>
+          <input id="order-id" maxlength="80" placeholder="Copie de uma mensagem ou cole o id" />
+          <p class="hint" id="selection-hint">Selecione uma mensagem na fila para preencher usuário e pedido.</p>
+        </div>
+
+        <div class="manager-actions">
+          <button class="btn success" data-manage-action="approve-order" type="button">Aprovar pedido</button>
+          <button class="btn danger" data-manage-action="cancel-order" type="button">Cancelar pedido</button>
+          <button class="btn" data-manage-action="refund-payment" type="button">Reembolsar pagamento</button>
+          <button class="btn" data-manage-action="dispatch-delivery" type="button">Despachar entrega</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-heading compact">
+          <div>
+            <span class="eyebrow">Catálogo</span>
+            <h2>Reposição de estoque</h2>
+          </div>
+        </div>
+        <div class="field">
+          <label for="restock-sku">Item</label>
+          <select id="restock-sku"></select>
+          <p class="hint" id="catalog-hint">Carregando catálogo...</p>
+        </div>
+        <div class="field inline-field">
+          <label for="restock-quantity">Quantidade</label>
+          <div class="inline-control">
+            <input id="restock-quantity" type="number" min="1" max="999" value="10" />
+            <button class="btn" data-manage-action="restock" type="button">Repor estoque</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-heading compact">
+          <div>
+            <span class="eyebrow">Mensageria de retorno</span>
+            <h2>Responder ao cliente</h2>
+          </div>
+        </div>
+        <div class="field">
+          <label for="reply-text">Mensagem</label>
+          <textarea id="reply-text" rows="4" maxlength="500" placeholder="Escreva uma resposta para o usuário selecionado..."></textarea>
+        </div>
+        <div class="response-actions">
+          <button class="btn primary wide" data-manage-action="reply-user" type="button">Enviar resposta ao usuário</button>
+          <button class="btn wide" data-manage-action="broadcast" type="button">Enviar comunicado geral</button>
+        </div>
+        <p class="hint">A resposta é publicada em <code>manager.reply</code> e passa pelo notify-service antes de chegar ao cliente.</p>
+      </div>
+    </section>
+
+    <section class="column right">
+      <div class="queue-header">
+        <div>
+          <span class="eyebrow">Tráfego do exchange <code>orders</code></span>
+          <h2>Fila da operação</h2>
+        </div>
+        <div class="queue-counts">
+          <span class="count-chip"><strong id="user-count">0</strong> ações</span>
+          <span class="count-chip"><strong id="system-count">0</strong> eventos</span>
+          <span class="count-chip"><strong id="sent-count">0</strong> enviadas</span>
+        </div>
+      </div>
+
+      <div class="card queue-card manager-feed-card">
+        <div class="feed-toolbar">
+          <div class="tabs" role="tablist">
+            <button class="tab active" data-filter="user" type="button" role="tab">Mensagens dos usuários</button>
+            <button class="tab" data-filter="system" type="button" role="tab">Eventos do sistema</button>
+            <button class="tab" data-filter="sent" type="button" role="tab">Enviadas</button>
+          </div>
+          <span class="queue-tag" id="feed-description">ações recebidas das filhas do order-user</span>
+        </div>
+        <div id="feed" class="message-list manager-feed"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+  <script src="app.js" type="module"></script>
+</body>
+</html>
