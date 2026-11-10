@@ -16,20 +16,20 @@ export async function readJson(req, limitBytes = 1_000_000) {
   const chunks = [];
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > limitBytes) throw Object.assign(new Error('Payload muito grande'), { statusCode: 413 });
+    if (size > limitBytes) throw Object.assign(new Error('Payload too large'), { statusCode: 413 });
     chunks.push(chunk);
   }
   if (!chunks.length) return {};
   try {
     return JSON.parse(Buffer.concat(chunks).toString('utf8'));
   } catch {
-    throw Object.assign(new Error('JSON inválido'), { statusCode: 400 });
+    throw Object.assign(new Error('Invalid JSON'), { statusCode: 400 });
   }
 }
 
 /**
- * Servidor HTTP mínimo para health check e leitura de dados de apoio.
- * O tráfego de negócio entre os serviços acontece via RabbitMQ.
+ * Minimal HTTP server for health checks and read-only support data.
+ * Business traffic between services flows through RabbitMQ.
  */
 export function startHttpServer({ port, serviceName, broker, routes = [], logger = console }) {
   const server = http.createServer(async (req, res) => {
@@ -59,19 +59,19 @@ export function startHttpServer({ port, serviceName, broker, routes = [], logger
 
       const route = routes.find((item) => item.method === req.method && item.path === url.pathname);
       if (!route) {
-        json(res, 404, { error: 'Rota não encontrada' });
+        json(res, 404, { error: 'Route not found' });
         return;
       }
 
       await route.handler(req, res, url);
     } catch (err) {
       logger.error(`[http] ${err.stack || err.message}`);
-      json(res, err.statusCode || 500, { error: err.message || 'Erro interno' });
+      json(res, err.statusCode || 500, { error: err.message || 'Internal server error' });
     }
   });
 
   server.listen(port, '0.0.0.0', () => {
-    logger.info(`[http] ${serviceName} ouvindo em http://0.0.0.0:${port}`);
+    logger.info(`[http] ${serviceName} listening on http://0.0.0.0:${port}`);
   });
 
   return server;

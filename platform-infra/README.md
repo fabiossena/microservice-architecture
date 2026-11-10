@@ -1,20 +1,20 @@
 # platform-infra
 
-Este diretório documenta a infraestrutura do laboratório. O Compose executável está na raiz do repositório para permitir uma subida com um único comando.
+This directory documents the lab infrastructure. The runnable Compose file is at the repository root so the stack can start with a single command.
 
 ## Local
 
-- RabbitMQ 3.13 Management (exchange `orders`, filas duráveis, management em 15672).
-- Oito containers de aplicação + RabbitMQ.
-- Volumes Docker nomeados para os sete bancos SQLite e para os dados do RabbitMQ.
-- Rede bridge `orders-net`.
-- Health checks HTTP em todos os serviços e `restart: unless-stopped`.
+- RabbitMQ 3.13 Management (`orders` exchange, durable queues, management on 15672).
+- Eight application containers + RabbitMQ.
+- Named Docker volumes for the seven SQLite databases and RabbitMQ data.
+- `orders-net` bridge network.
+- HTTP health checks on every service and `restart: unless-stopped`.
 
-A topologia de filas e bindings é declarada de forma idempotente pelos próprios serviços ao conectar (assert exchange/queue/bind). Não há definitions importadas manualmente.
+The queue and binding topology is declared idempotently by the services themselves when they connect (assert exchange/queue/bind). There are no manually imported definitions.
 
-## Produção (referência)
+## Production (reference)
 
-O artigo cita Kubernetes, Terraform e monitoramento. Para evoluir este laboratório:
+The article mentions Kubernetes, Terraform, and monitoring. To evolve this lab:
 
 ```text
 kubernetes/
@@ -38,22 +38,22 @@ monitoring/
   otel-collector/
 ```
 
-Sugestões:
+Suggestions:
 
-- Um namespace por ambiente (`dev`, `staging`, `prod`) e NetworkPolicies restringindo tráfego.
-- Secrets para credenciais do RabbitMQ/Postgres; nunca no Compose de produção.
-- StatefulSet/operador para RabbitMQ ou serviço gerenciado (CloudAMQP, Amazon MQ).
-- Probes `liveness`/`readiness` usando `/health`.
-- HPA por CPU e/ou lag de fila (KEDA).
-- Ingress com TLS, autenticação e rate limit no gateway.
-- OpenTelemetry para traces correlacionados por `correlationId`.
-- Alertas para DLQ, fila crescendo, consumidores zerados e erros 5xx.
+- One namespace per environment (`dev`, `staging`, `prod`) and NetworkPolicies restricting traffic.
+- Secrets for RabbitMQ/Postgres credentials; never in a production Compose file.
+- StatefulSet/operator for RabbitMQ or a managed service (CloudAMQP, Amazon MQ).
+- `liveness`/`readiness` probes using `/health`.
+- HPA by CPU and/or queue lag (KEDA).
+- Ingress with TLS, authentication, and rate limiting at the gateway.
+- OpenTelemetry for traces correlated by `correlationId`.
+- Alerts for DLQ growth, growing queues, zero consumers, and 5xx errors.
 
-## Observabilidade mínima já disponível
+## Minimal observability already available
 
-- `/health` em todos os serviços (inclui estado do broker).
-- `/api/health` agregado no gateway.
-- `/api/queues` consumindo a API de management do RabbitMQ.
-- Histórico de entrada/saída em SQLite em ambas as views.
-- `correlationId` no envelope de eventos.
-- Logs estruturados simples com prefixo do serviço.
+- `/health` on every service (including broker state).
+- Aggregated `/api/health` on the gateway.
+- `/api/queues` using the RabbitMQ management API.
+- Inbound/outbound history in SQLite in both views.
+- `correlationId` in the event envelope.
+- Simple structured logs prefixed with the service name.

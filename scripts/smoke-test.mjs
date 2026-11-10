@@ -1,10 +1,10 @@
 /**
- * Smoke test do fluxo distribuído.
+ * Smoke test for the distributed flow.
  *
- * Uso (com o Compose no ar):
+ * Usage (with the Compose stack running):
  *   node scripts/smoke-test.mjs
  *
- * Variáveis opcionais:
+ * Optional environment variables:
  *   GATEWAY_URL (default http://localhost:8070)
  *   ORDERS_URL  (default http://localhost:8091)
  *   PAYMENTS_URL(default http://localhost:8092)
@@ -55,18 +55,18 @@ async function waitFor(description, fn, timeoutMs = 40000) {
     if (value) return value;
     await sleep(1000);
   }
-  throw new Error(`Timeout aguardando: ${description}`);
+  throw new Error(`Timeout waiting for: ${description}`);
 }
 
 async function main() {
-  console.log('1. Health agregado');
+  console.log('1. Aggregated health');
   const health = await request(`${GATEWAY}/api/health`);
-  assert(health.services.every((service) => service.ok), 'todos os serviços online');
+  assert(health.services.every((service) => service.ok), 'all services online');
   assert(health.rabbit.ok, 'RabbitMQ online');
 
   const user = `Smoke-${Date.now().toString().slice(-8)}`;
   const orderId = crypto.randomUUID();
-  console.log(`2. Pedido de ${user} (${orderId.slice(0, 8)})`);
+  console.log(`2. Order from ${user} (${orderId.slice(0, 8)})`);
 
   const placed = await post(`${GATEWAY}/user/api/actions`, {
     user,
@@ -79,46 +79,46 @@ async function main() {
       unitPrice: 45.9
     }
   });
-  assert(placed.item.eventType === 'user.order.place', 'comando publicado');
+  assert(placed.item.eventType === 'user.order.place', 'command published');
 
-  console.log('3. Aprovação pela operação');
+  console.log('3. Operations approval');
   await post(`${GATEWAY}/manage/api/actions`, {
     operator: 'Smoke Test',
     action: 'approve-order',
     payload: { targetUser: user, orderId }
   });
 
-  console.log('4. Coreografia até a entrega');
-  await waitFor('pedido entregue na view do cliente', async () => {
+  console.log('4. Choreography through delivery');
+  await waitFor('order delivered in the customer view', async () => {
     const history = await request(`${GATEWAY}/user/api/messages?user=${encodeURIComponent(user)}`);
-    return history.items.some((item) => item.message.includes('entregue'));
+    return history.items.some((item) => item.message.includes('delivered'));
   });
 
   const orders = await request(`${ORDERS}/orders`);
   const order = orders.items.find((item) => item.id === orderId);
-  assert(order?.status === 'COMPLETED', `pedido concluído (status=${order?.status})`);
+  assert(order?.status === 'COMPLETED', `order completed (status=${order?.status})`);
 
   const payments = await request(`${PAYMENTS}/payments`);
   const payment = payments.items.find((item) => item.order_id === orderId);
-  assert(payment?.status === 'APPROVED', `pagamento aprovado (status=${payment?.status})`);
+  assert(payment?.status === 'APPROVED', `payment approved (status=${payment?.status})`);
 
   const deliveries = await request(`${DELIVERY}/deliveries`);
   const delivery = deliveries.items.find((item) => item.order_id === orderId);
-  assert(delivery?.status === 'DELIVERED', `entrega concluída (status=${delivery?.status})`);
+  assert(delivery?.status === 'DELIVERED', `delivery completed (status=${delivery?.status})`);
 
   const catalog = await request(`${CATALOG}/catalog`);
   const pizza = catalog.items.find((item) => item.sku === 'pizza-margherita');
-  assert(typeof pizza?.stock === 'number', `estoque consultável (${pizza?.stock})`);
+  assert(typeof pizza?.stock === 'number', `stock query works (${pizza?.stock})`);
 
-  console.log('5. Resposta da operação');
-  const reply = `Teste automatizado concluído para o pedido #${orderId.slice(0, 8)}.`;
+  console.log('5. Operations reply');
+  const reply = `Automated test completed for order #${orderId.slice(0, 8)}.`;
   await post(`${GATEWAY}/manage/api/actions`, {
     operator: 'Smoke Test',
     action: 'reply-user',
     payload: { targetUser: user, message: reply }
   });
 
-  await waitFor('resposta na caixa do cliente', async () => {
+  await waitFor('reply in the customer inbox', async () => {
     const history = await request(`${GATEWAY}/user/api/messages?user=${encodeURIComponent(user)}`);
     return history.items.some((item) => item.message === reply);
   });
@@ -126,13 +126,13 @@ async function main() {
   const managerMessages = await request(`${GATEWAY}/manage/api/messages?category=user`);
   assert(
     managerMessages.items.some((item) => item.user === user),
-    'ação visível na fila da operação'
+    'action visible in the operations queue'
   );
 
   console.log('\nSmoke test OK.');
 }
 
 main().catch((err) => {
-  console.error(`\nSmoke test falhou: ${err.message}`);
+  console.error(`\nSmoke test failed: ${err.message}`);
   process.exit(1);
 });

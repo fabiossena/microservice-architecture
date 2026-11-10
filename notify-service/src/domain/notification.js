@@ -1,28 +1,28 @@
 const TITLES = {
-  'order.created': 'Pedido criado',
-  'order.confirmed': 'Pedido aprovado',
-  'order.cancelled': 'Pedido cancelado',
-  'order.cancel_rejected': 'Cancelamento não permitido',
-  'order.not_found': 'Pedido não encontrado',
-  'order.status': 'Status do pedido',
-  'catalog.reserved': 'Estoque reservado',
-  'catalog.rejected': 'Estoque insuficiente',
-  'catalog.checked': 'Consulta de estoque',
-  'catalog.restocked': 'Reposição de estoque',
-  'catalog.released': 'Estoque liberado',
-  'payment.approved': 'Pagamento aprovado',
-  'payment.declined': 'Pagamento recusado',
-  'payment.refunded': 'Reembolso processado',
-  'payment.info': 'Informação de pagamento',
-  'payment.retry_failed': 'Nova tentativa não realizada',
-  'delivery.assigned': 'Entregador designado',
-  'delivery.dispatched': 'Pedido em rota',
-  'delivery.delivered': 'Pedido entregue',
-  'delivery.cancelled': 'Entrega cancelada',
-  'delivery.eta': 'Previsão de entrega',
-  'delivery.info': 'Informação de entrega',
-  'manager.reply': 'Mensagem da operação',
-  'manager.broadcast': 'Comunicado geral'
+  'order.created': 'Order created',
+  'order.confirmed': 'Order approved',
+  'order.cancelled': 'Order cancelled',
+  'order.cancel_rejected': 'Cancellation not allowed',
+  'order.not_found': 'Order not found',
+  'order.status': 'Order status',
+  'catalog.reserved': 'Stock reserved',
+  'catalog.rejected': 'Insufficient stock',
+  'catalog.checked': 'Stock check',
+  'catalog.restocked': 'Stock restocked',
+  'catalog.released': 'Stock released',
+  'payment.approved': 'Payment approved',
+  'payment.declined': 'Payment declined',
+  'payment.refunded': 'Refund processed',
+  'payment.info': 'Payment information',
+  'payment.retry_failed': 'Retry could not be processed',
+  'delivery.assigned': 'Courier assigned',
+  'delivery.dispatched': 'Order out for delivery',
+  'delivery.delivered': 'Order delivered',
+  'delivery.cancelled': 'Delivery cancelled',
+  'delivery.eta': 'Delivery estimate',
+  'delivery.info': 'Delivery information',
+  'manager.reply': 'Message from operations',
+  'manager.broadcast': 'General announcement'
 };
 
 const SEVERITIES = {
@@ -44,7 +44,7 @@ const SEVERITIES = {
 };
 
 export function titleFor(type) {
-  return TITLES[type] || 'Atualização do sistema';
+  return TITLES[type] || 'System update';
 }
 
 export function severityFor(type) {

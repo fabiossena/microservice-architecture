@@ -1,9 +1,9 @@
 export const DEFAULT_CATALOG = [
   { sku: 'pizza-margherita', name: 'Pizza Margherita', price: 45.9, stock: 50 },
-  { sku: 'burger-artesanal', name: 'Burger Artesanal', price: 32.5, stock: 30 },
-  { sku: 'sushi-combo', name: 'Combo de Sushi (12 peças)', price: 58.0, stock: 20 },
-  { sku: 'salada-caesar', name: 'Salada Caesar', price: 24.9, stock: 15 },
-  { sku: 'pasta-ao-pesto', name: 'Pasta ao Pesto', price: 39.9, stock: 40 }
+  { sku: 'burger-artesanal', name: 'Artisan Burger', price: 32.5, stock: 30 },
+  { sku: 'sushi-combo', name: 'Sushi Combo (12 pieces)', price: 58.0, stock: 20 },
+  { sku: 'salada-caesar', name: 'Caesar Salad', price: 24.9, stock: 15 },
+  { sku: 'pasta-ao-pesto', name: 'Pesto Pasta', price: 39.9, stock: 40 }
 ];
 
 export function availability(items, stockBySku) {
@@ -24,12 +24,12 @@ export function availability(items, stockBySku) {
 
 export function validateItems(items) {
   if (!Array.isArray(items) || items.length === 0) {
-    throw new Error('Pedido sem itens para reservar');
+    throw new Error('Order has no items to reserve');
   }
   return items.map((item) => {
     const quantity = Number(item.quantity);
     if (!item.sku || !Number.isFinite(quantity) || quantity <= 0) {
-      throw new Error('Item inválido no pedido');
+      throw new Error('Invalid item in order');
     }
     return {
       sku: String(item.sku),
@@ -42,6 +42,6 @@ export function validateItems(items) {
 
 export function formatMissing(missing) {
   return missing
-    .map((item) => `${item.name} (pedido: ${item.requested}, disponível: ${item.available})`)
+    .map((item) => `${item.name} (requested: ${item.requested}, available: ${item.available})`)
     .join(', ');
 }

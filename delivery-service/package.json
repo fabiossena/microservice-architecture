@@ -1,9 +1,9 @@
-{
+﻿{
   "name": "delivery-service",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Serviço de entregas simulado",
+  "description": "Simulated delivery service",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

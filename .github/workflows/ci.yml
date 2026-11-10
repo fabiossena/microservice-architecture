@@ -1,4 +1,4 @@
-name: CI
+﻿name: CI
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Instalar dependências das views e gateway
+      - name: Install view and gateway dependencies
         run: |
           npm ci
         working-directory: order-user
@@ -45,8 +45,8 @@ jobs:
         working-directory: order-manage-queue
       - run: npm ci
         working-directory: api-gateway
-      - name: Checar sintaxe JavaScript
+      - name: Check JavaScript syntax
         run: |
           find . -name '*.js' -not -path '*/node_modules/*' -print0 | xargs -0 -n1 node --check
-      - name: Validar Docker Compose
+      - name: Validate Docker Compose
         run: docker compose config > /dev/null

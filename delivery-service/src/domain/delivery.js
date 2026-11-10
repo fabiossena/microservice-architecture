@@ -6,17 +6,17 @@ export const DELIVERY_STATUS = Object.freeze({
 });
 
 export const DELIVERY_LABELS = Object.freeze({
-  ASSIGNED: 'Entregador designado',
-  DISPATCHED: 'Saiu para entrega',
-  DELIVERED: 'Entregue',
-  CANCELLED: 'Cancelada'
+  ASSIGNED: 'Courier assigned',
+  DISPATCHED: 'Out for delivery',
+  DELIVERED: 'Delivered',
+  CANCELLED: 'Cancelled'
 });
 
 export const COURIERS = [
-  'Carlos (moto 01)',
-  'Fernanda (moto 02)',
+  'Carlos (motorcycle 01)',
+  'Fernanda (motorcycle 02)',
   'Rafael (bike 03)',
-  'Juliana (carro 04)'
+  'Juliana (car 04)'
 ];
 
 export function pickCourier(seed = Math.random()) {

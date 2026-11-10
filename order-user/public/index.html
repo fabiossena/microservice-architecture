@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Orders Lab · Cliente</title>
+  <title>Orders Lab · Customer</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -12,14 +12,14 @@
       <div class="brand-mark">OL</div>
       <div>
         <strong>Orders Lab</strong>
-        <span>Portal do cliente · microsserviços</span>
+        <span>Customer portal · microservices</span>
       </div>
     </div>
     <div class="topbar-actions">
-      <span id="connection" class="status-pill offline" title="Conexão em tempo real">
-        <span class="dot"></span><span id="connection-label">Conectando</span>
+      <span id="connection" class="status-pill offline" title="Real-time connection">
+        <span class="dot"></span><span id="connection-label">Connecting</span>
       </span>
-      <button id="new-window" class="btn ghost" type="button">Abrir outra janela</button>
+      <button id="new-window" class="btn ghost" type="button">Open another window</button>
     </div>
   </header>
 
@@ -28,49 +28,49 @@
       <div class="card identity-card">
         <div class="card-heading">
           <div>
-            <span class="eyebrow">Sessão do cliente</span>
-            <h1 id="welcome">Olá, Ana</h1>
+            <span class="eyebrow">Customer session</span>
+            <h1 id="welcome">Hello, Alice</h1>
           </div>
           <div class="avatar" id="avatar">A</div>
         </div>
         <form id="user-form" class="user-form" autocomplete="off">
-          <label for="user-input">Nome do usuário</label>
+          <label for="user-input">Username</label>
           <div class="input-row">
-            <input id="user-input" name="user" list="user-suggestions" maxlength="40" placeholder="Ex.: Ana" required />
+            <input id="user-input" name="user" list="user-suggestions" maxlength="40" placeholder="e.g. Alice" required />
             <datalist id="user-suggestions">
-              <option value="Ana"></option>
-              <option value="Bruno"></option>
-              <option value="Carla"></option>
-              <option value="Diego"></option>
-              <option value="Elena"></option>
+              <option value="Alice"></option>
+              <option value="Bob"></option>
+              <option value="Carol"></option>
+              <option value="Daniel"></option>
+              <option value="Emma"></option>
             </datalist>
-            <button class="btn primary" type="submit">Entrar</button>
+            <button class="btn primary" type="submit">Enter</button>
           </div>
-          <p class="hint">Cada aba pode usar um nome diferente. Abra outra janela para simular outro cliente.</p>
+          <p class="hint">Each tab can use a different name. Open another window to simulate another customer.</p>
         </form>
       </div>
 
       <div class="card">
         <div class="card-heading compact">
           <div>
-            <span class="eyebrow">Ação do cliente</span>
-            <h2>Novo pedido</h2>
+            <span class="eyebrow">Customer action</span>
+            <h2>New order</h2>
           </div>
         </div>
         <div class="field">
-          <label for="item-select">Item do catálogo</label>
+          <label for="item-select">Catalog item</label>
           <select id="item-select"></select>
-          <p class="hint" id="catalog-hint">Carregando catálogo...</p>
+          <p class="hint" id="catalog-hint">Loading catalog...</p>
         </div>
         <div class="field">
-          <label for="quantity">Quantidade</label>
+          <label for="quantity">Quantity</label>
           <input id="quantity" type="number" min="1" max="99" value="1" />
         </div>
-        <button id="place-order" class="btn accent wide" type="button">Fazer pedido</button>
+        <button id="place-order" class="btn accent wide" type="button">Place order</button>
         <div class="order-reference">
-          <span>Código do pedido em foco</span>
+          <span>Order code in focus</span>
           <div class="input-row small">
-            <input id="order-id" maxlength="80" placeholder="Ainda não há pedido" />
+            <input id="order-id" maxlength="80" placeholder="No order yet" />
             <span class="copy-chip" id="order-id-short">—</span>
           </div>
         </div>
@@ -79,21 +79,21 @@
       <div class="card">
         <div class="card-heading compact">
           <div>
-            <span class="eyebrow">Comandos publicados</span>
-            <h2>Ações do usuário</h2>
+            <span class="eyebrow">Published commands</span>
+            <h2>User actions</h2>
           </div>
         </div>
         <div class="action-grid">
-          <button class="btn" data-action="check-status" type="button">Consultar status</button>
-          <button class="btn" data-action="cancel-order" type="button">Cancelar pedido</button>
-          <button class="btn" data-action="retry-payment" type="button">Tentar pagamento</button>
-          <button class="btn" data-action="delivery-eta" type="button">Previsão de entrega</button>
-          <button class="btn" data-action="check-stock" type="button">Consultar estoque</button>
-          <button class="btn" data-action="complaint" type="button">Falar com a operação</button>
+          <button class="btn" data-action="check-status" type="button">Check status</button>
+          <button class="btn" data-action="cancel-order" type="button">Cancel order</button>
+          <button class="btn" data-action="retry-payment" type="button">Retry payment</button>
+          <button class="btn" data-action="delivery-eta" type="button">Delivery ETA</button>
+          <button class="btn" data-action="check-stock" type="button">Check stock</button>
+          <button class="btn" data-action="complaint" type="button">Contact operations</button>
         </div>
         <div class="field">
-          <label for="complaint-text">Mensagem para a operação</label>
-          <textarea id="complaint-text" rows="3" maxlength="500" placeholder="Descreva sua solicitação..."></textarea>
+          <label for="complaint-text">Message to operations</label>
+          <textarea id="complaint-text" rows="3" maxlength="500" placeholder="Describe your request..."></textarea>
         </div>
       </div>
     </section>
@@ -101,27 +101,27 @@
     <section class="column right">
       <div class="queue-header">
         <div>
-          <span class="eyebrow">Mensageria em tempo real</span>
-          <h2>Minha caixa de mensagens</h2>
+          <span class="eyebrow">Real-time messaging</span>
+          <h2>My inbox</h2>
         </div>
         <div class="queue-counts">
-          <span class="count-chip"><strong id="in-count">0</strong> recebidas</span>
-          <span class="count-chip"><strong id="out-count">0</strong> enviadas</span>
+          <span class="count-chip"><strong id="in-count">0</strong> received</span>
+          <span class="count-chip"><strong id="out-count">0</strong> sent</span>
         </div>
       </div>
 
       <div class="queues">
         <div class="card queue-card">
           <div class="queue-title">
-            <h3>Recebidas</h3>
-            <span class="queue-tag">consumo · notification.created</span>
+            <h3>Received</h3>
+            <span class="queue-tag">consume · notification.created</span>
           </div>
           <div id="inbox-list" class="message-list"></div>
         </div>
         <div class="card queue-card">
           <div class="queue-title">
-            <h3>Enviadas</h3>
-            <span class="queue-tag">publicação · filas dos serviços</span>
+            <h3>Sent</h3>
+            <span class="queue-tag">publish · service queues</span>
           </div>
           <div id="outbox-list" class="message-list"></div>
         </div>

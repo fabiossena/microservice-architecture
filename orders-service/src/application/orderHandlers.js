@@ -8,8 +8,8 @@ import {
 } from '../domain/order.js';
 
 /**
- * Casos de uso do serviço de pedidos.
- * O serviço é dono do ciclo de vida do pedido e reage aos eventos dos demais serviços.
+ * Orders service use cases.
+ * This service owns the order lifecycle and reacts to events from other services.
  */
 export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
   const timers = new Map();
@@ -25,10 +25,10 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
       try {
         const order = db.get(orderId);
         if (order?.status === ORDER_STATUS.PENDING_APPROVAL) {
-          await confirm(order, 'Aprovação automática da simulação');
+          await confirm(order, 'Automatic simulation approval');
         }
       } catch (err) {
-        logger.error(`[orders] falha na aprovação automática: ${err.message}`);
+        logger.error(`[orders] automatic approval failed: ${err.message}`);
       }
     }, autoApproveMs);
     timer.unref?.();
@@ -48,7 +48,7 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
       if (current) {
         await publish('order.status', {
           user: current.user,
-          message: `O pedido #${shortId(current.id)} já está com o status "${statusLabel(current.status)}".`,
+          message: `Order #${shortId(current.id)} is already "${statusLabel(current.status)}".`,
           payload: { orderId: current.id, status: current.status },
           correlationId: current.id
         });
@@ -60,7 +60,7 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
     const items = JSON.parse(updated.items);
     await publish('order.confirmed', {
       user: updated.user,
-      message: `Pedido #${shortId(updated.id)} aprovado (${reason}). Valor: ${formatMoney(updated.total)}.`,
+      message: `Order #${shortId(updated.id)} approved (${reason}). Total: ${formatMoney(updated.total)}.`,
       payload: {
         orderId: updated.id,
         total: updated.total,
@@ -76,7 +76,7 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
     if (!canCancel(order.status)) {
       await publish('order.cancel_rejected', {
         user: order.user,
-        message: `O pedido #${shortId(order.id)} não pode mais ser cancelado (status: ${statusLabel(order.status)}).`,
+        message: `Order #${shortId(order.id)} can no longer be cancelled (status: ${statusLabel(order.status)}).`,
         payload: { orderId: order.id, status: order.status, actor },
         correlationId: order.id
       });
@@ -87,7 +87,7 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
     const updated = db.get(order.id);
     await publish('order.cancelled', {
       user: updated.user,
-      message: `Pedido #${shortId(updated.id)} cancelado por ${actor}. Motivo: ${reason}.`,
+      message: `Order #${shortId(updated.id)} cancelled by ${actor}. Reason: ${reason}.`,
       payload: {
         orderId: updated.id,
         previousStatus: order.status,
@@ -109,7 +109,7 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
       db.insert(order);
       await publish('order.created', {
         user: order.user,
-        message: `Pedido #${shortId(order.id)} criado no valor de ${formatMoney(order.total)}. Aguardando aprovação da operação.`,
+        message: `Order #${shortId(order.id)} created for ${formatMoney(order.total)}. Waiting for operations approval.`,
         payload: {
           orderId: order.id,
           total: order.total,
@@ -126,7 +126,7 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
       if (!order) {
         await publish('order.not_found', {
           user: event.user,
-          message: `O pedido informado não foi encontrado para cancelamento.`,
+          message: 'The order to cancel was not found.',
           payload: { orderId: event.payload?.orderId || null }
         });
         return;
@@ -134,12 +134,12 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
       if (order.user !== event.user) {
         await publish('order.cancel_rejected', {
           user: event.user,
-          message: 'Este pedido pertence a outro usuário.',
+          message: 'This order belongs to another user.',
           payload: { orderId: order.id }
         });
         return;
       }
-      await cancel(order, 'Solicitação do cliente', 'cliente');
+      await cancel(order, 'Customer request', 'customer');
     },
 
     'manager.order.cancel': async (event) => {
@@ -147,12 +147,12 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
       if (!order) {
         await publish('order.not_found', {
           user: event.user,
-          message: `Pedido #${shortId(event.payload?.orderId)} não encontrado para cancelamento.`,
+          message: `Order #${shortId(event.payload?.orderId)} was not found for cancellation.`,
           payload: { orderId: event.payload?.orderId || null }
         });
         return;
       }
-      await cancel(order, event.payload?.reason || 'Cancelamento pela operação', 'operação');
+      await cancel(order, event.payload?.reason || 'Operations cancellation', 'operations');
     },
 
     'manager.order.approve': async (event) => {
@@ -160,12 +160,12 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
       if (!order) {
         await publish('order.not_found', {
           user: event.user,
-          message: `Pedido #${shortId(event.payload?.orderId)} não encontrado para aprovação.`,
+          message: `Order #${shortId(event.payload?.orderId)} was not found for approval.`,
           payload: { orderId: event.payload?.orderId || null }
         });
         return;
       }
-      await confirm(order, 'Aprovação manual da operação');
+      await confirm(order, 'Manual operations approval');
     },
 
     'user.order.status': async (event) => {
@@ -173,14 +173,14 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
       if (!order) {
         await publish('order.not_found', {
           user: event.user,
-          message: 'Pedido não encontrado. Confira o código informado.',
+          message: 'Order not found. Check the order code.',
           payload: { orderId: event.payload?.orderId || null }
         });
         return;
       }
       await publish('order.status', {
         user: order.user,
-        message: `Pedido #${shortId(order.id)}: ${statusLabel(order.status)}. Total: ${formatMoney(order.total)}.`,
+        message: `Order #${shortId(order.id)}: ${statusLabel(order.status)}. Total: ${formatMoney(order.total)}.`,
         payload: {
           orderId: order.id,
           status: order.status,
@@ -194,25 +194,25 @@ export function createOrderHandlers({ db, broker, logger, autoApproveMs }) {
     'catalog.rejected': async (event) => {
       const order = db.get(event.payload?.orderId);
       if (!order || [ORDER_STATUS.CANCELLED, ORDER_STATUS.COMPLETED].includes(order.status)) return;
-      db.forceStatus(order.id, ORDER_STATUS.REJECTED, 'Estoque insuficiente');
+      db.forceStatus(order.id, ORDER_STATUS.REJECTED, 'Insufficient stock');
     },
 
     'payment.approved': async (event) => {
       const order = db.get(event.payload?.orderId);
       if (!order || [ORDER_STATUS.CANCELLED, ORDER_STATUS.REJECTED, ORDER_STATUS.COMPLETED].includes(order.status)) return;
-      db.forceStatus(order.id, ORDER_STATUS.PAID, 'Pagamento aprovado');
+      db.forceStatus(order.id, ORDER_STATUS.PAID, 'Payment approved');
     },
 
     'payment.declined': async (event) => {
       const order = db.get(event.payload?.orderId);
       if (!order || [ORDER_STATUS.CANCELLED, ORDER_STATUS.REJECTED, ORDER_STATUS.COMPLETED].includes(order.status)) return;
-      db.forceStatus(order.id, ORDER_STATUS.PAYMENT_FAILED, 'Pagamento recusado');
+      db.forceStatus(order.id, ORDER_STATUS.PAYMENT_FAILED, 'Payment declined');
     },
 
     'delivery.delivered': async (event) => {
       const order = db.get(event.payload?.orderId);
       if (!order || order.status === ORDER_STATUS.CANCELLED) return;
-      db.forceStatus(order.id, ORDER_STATUS.COMPLETED, 'Entrega concluída');
+      db.forceStatus(order.id, ORDER_STATUS.COMPLETED, 'Delivery completed');
     },
 
     shutdown() {

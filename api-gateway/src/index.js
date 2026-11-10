@@ -1,4 +1,4 @@
-import http from 'node:http';
+﻿import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -136,9 +136,9 @@ function proxyRequest(req, res, prefix, targetBase) {
   );
 
   upstream.on('error', (err) => {
-    logger.error(`[gateway] proxy ${prefix} falhou: ${err.message}`);
+    logger.error(`[gateway] proxy ${prefix} failed: ${err.message}`);
     if (!res.headersSent) {
-      json(res, 502, { error: `Serviço indisponível atrás de ${prefix}` });
+      json(res, 502, { error: `Service unavailable behind ${prefix}` });
     } else {
       res.end();
     }
@@ -170,7 +170,7 @@ const server = http.createServer(async (req, res) => {
       try {
         json(res, 200, { items: await collectQueues() });
       } catch (err) {
-        json(res, 502, { error: 'RabbitMQ management indisponível', detail: err.message });
+        json(res, 502, { error: 'RabbitMQ management unavailable', detail: err.message });
       }
       return;
     }
@@ -218,13 +218,13 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    json(res, 404, { error: 'Rota não encontrada' });
+    json(res, 404, { error: 'Route not found' });
   } catch (err) {
     logger.error(`[gateway] ${err.stack || err.message}`);
-    json(res, 500, { error: err.message || 'Erro interno' });
+    json(res, 500, { error: err.message || 'Internal server error' });
   }
 });
 
 server.listen(config.port, '0.0.0.0', () => {
-  logger.info(`[gateway] dashboard em http://0.0.0.0:${config.port}`);
+  logger.info(`[gateway] dashboard at http://0.0.0.0:${config.port}`);
 });

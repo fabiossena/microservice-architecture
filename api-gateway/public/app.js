@@ -1,11 +1,11 @@
-function formatNumber(value) {
-  return new Intl.NumberFormat('pt-BR').format(Number(value) || 0);
+﻿function formatNumber(value) {
+  return new Intl.NumberFormat('en-US').format(Number(value) || 0);
 }
 
 function relativeTime(iso) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return '—';
-  return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
 const els = {
@@ -66,14 +66,14 @@ function renderHealth(data) {
   els.rabbitSummary.textContent = data.rabbit.ok ? 'online' : 'offline';
   els.rabbitSummary.style.color = data.rabbit.ok ? 'var(--green)' : 'var(--red)';
   els.rabbitVersion.textContent = data.rabbit.ok
-    ? `v${data.rabbit.rabbitmqVersion} · ${formatNumber(data.rabbit.messages)} mensagens`
+    ? `v${data.rabbit.rabbitmqVersion} · ${formatNumber(data.rabbit.messages)} messages`
     : data.rabbit.error || 'management API';
 
   els.services.replaceChildren();
   for (const service of [...data.services].sort((a, b) => a.name.localeCompare(b.name))) {
     els.services.appendChild(serviceCard(service));
   }
-  els.lastUpdate.textContent = `atualizado às ${relativeTime(data.timestamp)}`;
+  els.lastUpdate.textContent = `updated at ${relativeTime(data.timestamp)}`;
 }
 
 function renderQueues(data) {
@@ -89,7 +89,7 @@ function renderQueues(data) {
     const cell = document.createElement('td');
     cell.colSpan = 7;
     cell.className = 'empty-cell';
-    cell.textContent = 'Nenhuma fila declarada ainda. Suba os serviços e faça um pedido.';
+    cell.textContent = 'No queues declared yet. Start the services and place an order.';
     row.appendChild(cell);
     els.queues.appendChild(row);
     return;
@@ -132,24 +132,24 @@ function renderQueues(data) {
     els.queues.appendChild(row);
   }
 
-  els.queuesUpdate.textContent = `${items.length} filas · ${formatNumber(totalMessages)} mensagens · ${formatNumber(totalConsumers)} consumidores`;
+  els.queuesUpdate.textContent = `${items.length} queues · ${formatNumber(totalMessages)} messages · ${formatNumber(totalConsumers)} consumers`;
 }
 
 async function refresh() {
   els.refreshState.classList.remove('online');
-  els.refreshLabel.textContent = 'Atualizando';
+  els.refreshLabel.textContent = 'Refreshing';
   try {
     const [healthResponse, queuesResponse] = await Promise.all([
       fetch('/api/health'),
       fetch('/api/queues')
     ]);
-    if (!healthResponse.ok) throw new Error('health indisponível');
+    if (!healthResponse.ok) throw new Error('health unavailable');
     renderHealth(await healthResponse.json());
     if (queuesResponse.ok) renderQueues(await queuesResponse.json());
     els.refreshState.classList.add('online');
-    els.refreshLabel.textContent = 'Ao vivo';
+    els.refreshLabel.textContent = 'Live';
   } catch (err) {
-    els.refreshLabel.textContent = 'Instável';
+    els.refreshLabel.textContent = 'Unstable';
     els.lastUpdate.textContent = err.message;
   }
 }

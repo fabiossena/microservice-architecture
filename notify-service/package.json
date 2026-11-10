@@ -1,9 +1,9 @@
-{
+﻿{
   "name": "notify-service",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Serviço de notificações orientado a eventos",
+  "description": "Event-driven notification service",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

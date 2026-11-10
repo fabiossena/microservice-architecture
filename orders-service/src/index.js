@@ -28,10 +28,10 @@ broker.subscribe(config.queue, eventTypes, async (event) => {
   const handler = handlers[event.type];
   if (!handler) return;
   if (db.markProcessed(event.id, event.type)) {
-    logger.info(`[orders] evento duplicado ignorado: ${event.type} (${event.id})`);
+    logger.info(`[orders] duplicate event ignored: ${event.type} (${event.id})`);
     return;
   }
-  logger.info(`[orders] processando ${event.type} de ${event.source}`);
+  logger.info(`[orders] processing ${event.type} from ${event.source}`);
   await handler(event);
 });
 
@@ -59,7 +59,7 @@ const server = startHttpServer({
 await broker.start();
 
 async function shutdown(signal) {
-  logger.info(`[orders] recebido ${signal}, encerrando...`);
+  logger.info(`[orders] received ${signal}, shutting down...`);
   handlers.shutdown();
   server.close();
   await broker.stop();

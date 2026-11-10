@@ -24,24 +24,24 @@ export function createDeliveryHandlers({
       try {
         await fn();
       } catch (err) {
-        logger.error(`[delivery] timer ${key} falhou: ${err.message}`);
+        logger.error(`[delivery] timer ${key} failed: ${err.message}`);
       }
     }, ms);
     timer.unref?.();
     timers.set(key, timer);
   }
 
-  async function dispatch(orderId, actor = 'sistema') {
+  async function dispatch(orderId, actor = 'system') {
     const delivery = db.byOrder(orderId);
     if (!delivery) {
-      logger.warn(`[delivery] pedido ${orderId} sem entrega para despachar`);
+      logger.warn(`[delivery] order ${orderId} has no delivery to dispatch`);
       return false;
     }
 
     if (delivery.status === DELIVERY_STATUS.DISPATCHED) {
       await publish('delivery.info', {
         user: delivery.user,
-        message: `A entrega do pedido #${orderId.slice(0, 8)} já saiu para rota.`,
+        message: `Delivery for order #${orderId.slice(0, 8)} is already out for delivery.`,
         payload: { orderId, status: delivery.status }
       });
       return false;
@@ -50,7 +50,7 @@ export function createDeliveryHandlers({
     if (delivery.status !== DELIVERY_STATUS.ASSIGNED) {
       await publish('delivery.info', {
         user: delivery.user,
-        message: `Não é possível despachar a entrega do pedido #${orderId.slice(0, 8)} (status: ${deliveryLabel(delivery.status)}).`,
+        message: `Cannot dispatch delivery for order #${orderId.slice(0, 8)} (status: ${deliveryLabel(delivery.status)}).`,
         payload: { orderId, status: delivery.status }
       });
       return false;
@@ -59,18 +59,18 @@ export function createDeliveryHandlers({
     db.transition(orderId, DELIVERY_STATUS.ASSIGNED, DELIVERY_STATUS.DISPATCHED);
     await publish('delivery.dispatched', {
       user: delivery.user,
-      message: `Pedido #${orderId.slice(0, 8)} saiu para entrega com ${delivery.courier} (${actor}).`,
+      message: `Order #${orderId.slice(0, 8)} is out for delivery with ${delivery.courier} (${actor}).`,
       payload: { orderId, courier: delivery.courier, etaMinutes: delivery.eta_minutes },
       correlationId: orderId
     });
 
     if (deliveryDelayMs > 0) {
-      setTimer(`deliver:${orderId}`, deliveryDelayMs, () => deliver(orderId, 'automático'));
+      setTimer(`deliver:${orderId}`, deliveryDelayMs, () => deliver(orderId, 'automatic'));
     }
     return true;
   }
 
-  async function deliver(orderId, actor = 'sistema') {
+  async function deliver(orderId, actor = 'system') {
     const delivery = db.byOrder(orderId);
     if (!delivery) return false;
 
@@ -81,7 +81,7 @@ export function createDeliveryHandlers({
     if (delivery.status !== DELIVERY_STATUS.DISPATCHED) {
       await publish('delivery.info', {
         user: delivery.user,
-        message: `A entrega do pedido #${orderId.slice(0, 8)} ainda não pode ser concluída (status: ${deliveryLabel(delivery.status)}).`,
+        message: `Delivery for order #${orderId.slice(0, 8)} cannot be completed yet (status: ${deliveryLabel(delivery.status)}).`,
         payload: { orderId, status: delivery.status }
       });
       return false;
@@ -90,7 +90,7 @@ export function createDeliveryHandlers({
     db.transition(orderId, DELIVERY_STATUS.DISPATCHED, DELIVERY_STATUS.DELIVERED);
     await publish('delivery.delivered', {
       user: delivery.user,
-      message: `Pedido #${orderId.slice(0, 8)} entregue por ${delivery.courier} (${actor}). Bom apetite!`,
+      message: `Order #${orderId.slice(0, 8)} delivered by ${delivery.courier} (${actor}). Enjoy your meal!`,
       payload: { orderId, courier: delivery.courier },
       correlationId: orderId
     });
@@ -114,13 +114,13 @@ export function createDeliveryHandlers({
 
       await publish('delivery.assigned', {
         user: delivery.user,
-        message: `Entregador ${courier} designado para o pedido #${orderId.slice(0, 8)}. Previsão: ${etaMinutes} minutos.`,
+        message: `Courier ${courier} assigned to order #${orderId.slice(0, 8)}. Estimated time: ${etaMinutes} minutes.`,
         payload: { orderId, courier, etaMinutes, status: DELIVERY_STATUS.ASSIGNED },
         correlationId: orderId
       });
 
       if (dispatchDelayMs > 0) {
-        setTimer(`dispatch:${orderId}`, dispatchDelayMs, () => dispatch(orderId, 'automático'));
+        setTimer(`dispatch:${orderId}`, dispatchDelayMs, () => dispatch(orderId, 'automatic'));
       }
     },
 
@@ -130,7 +130,7 @@ export function createDeliveryHandlers({
       if (!delivery) {
         await publish('delivery.eta', {
           user: event.user,
-          message: 'Ainda não há entrega registrada para este pedido. O pagamento precisa ser aprovado primeiro.',
+          message: 'There is no delivery registered for this order yet. Payment must be approved first.',
           payload: { orderId, status: 'NOT_FOUND' }
         });
         return;
@@ -138,10 +138,10 @@ export function createDeliveryHandlers({
 
       const message =
         delivery.status === DELIVERY_STATUS.DELIVERED
-          ? `Pedido #${orderId.slice(0, 8)} já foi entregue por ${delivery.courier}.`
+          ? `Order #${orderId.slice(0, 8)} was already delivered by ${delivery.courier}.`
           : delivery.status === DELIVERY_STATUS.CANCELLED
-            ? `A entrega do pedido #${orderId.slice(0, 8)} foi cancelada.`
-            : `Pedido #${orderId.slice(0, 8)}: ${deliveryLabel(delivery.status)}. Entregador: ${delivery.courier}. Previsão: ${delivery.eta_minutes} min.`;
+            ? `Delivery for order #${orderId.slice(0, 8)} was cancelled.`
+            : `Order #${orderId.slice(0, 8)}: ${deliveryLabel(delivery.status)}. Courier: ${delivery.courier}. Estimated time: ${delivery.eta_minutes} min.`;
 
       await publish('delivery.eta', {
         user: delivery.user,
@@ -162,12 +162,12 @@ export function createDeliveryHandlers({
       if (!delivery) {
         await publish('delivery.info', {
           user: event.user,
-          message: `Não existe entrega para o pedido #${String(orderId || '').slice(0, 8)}.`,
+          message: `No delivery exists for order #${String(orderId || '').slice(0, 8)}.`,
           payload: { orderId }
         });
         return;
       }
-      await dispatch(orderId, 'operação');
+      await dispatch(orderId, 'operations');
     },
 
     'order.cancelled': async (event) => {
@@ -186,7 +186,7 @@ export function createDeliveryHandlers({
       db.transition(orderId, delivery.status, DELIVERY_STATUS.CANCELLED);
       await publish('delivery.cancelled', {
         user: delivery.user,
-        message: `Entrega do pedido #${orderId.slice(0, 8)} cancelada.`,
+        message: `Delivery for order #${orderId.slice(0, 8)} cancelled.`,
         payload: { orderId, status: DELIVERY_STATUS.CANCELLED },
         correlationId: orderId
       });

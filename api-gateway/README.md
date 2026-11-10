@@ -1,12 +1,12 @@
 ﻿# api-gateway
 
-Ponto de entrada HTTP do laboratório. Além do dashboard de observabilidade, faz proxy reverso simples para as duas views.
+HTTP entry point for the lab. In addition to the observability dashboard, it reverse-proxies the two views.
 
 - Dashboard: `http://localhost:8070/`
-- Portal do cliente via gateway: `/user/`
-- Central da operação via gateway: `/manage/`
-- Health agregado: `GET /api/health`
-- Filas via RabbitMQ Management: `GET /api/queues`
-- Health próprio: `GET /health`
+- Customer portal through the gateway: `/user/`
+- Operations center through the gateway: `/manage/`
+- Aggregated health: `GET /api/health`
+- Queue data through RabbitMQ Management: `GET /api/queues`
+- Own health: `GET /health`
 
-O proxy preserva streaming (SSE) das views. Em produção, este componente seria substituído ou complementado por um gateway com autenticação, rate limiting, TLS e roteamento declarativo (Kong, Envoy, YARP, Ocelot etc.).
+The proxy preserves streaming (SSE) from the views. In production, this component would be replaced or complemented by a gateway with authentication, rate limiting, TLS, and declarative routing (Kong, Envoy, YARP, Ocelot, etc.).

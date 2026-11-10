@@ -1,80 +1,80 @@
-﻿# Catálogo de eventos
+﻿# Event catalog
 
-Exchange: `orders` (topic, durável). Routing key = `type` do envelope.
+Exchange: `orders` (topic, durable). Routing key = envelope `type`.
 
-## Comandos do cliente (`order-user`)
+## Customer commands (`order-user`)
 
-| Routing key | Payload principal | Consumidores | Efeito |
+| Routing key | Main payload | Consumers | Effect |
 |---|---|---|---|
-| `user.order.place` | `orderId`, `items[]`, `total` | orders-service, order-manage-queue | Cria pedido `PENDING_APPROVAL`; agenda aprovação automática. |
-| `user.order.cancel` | `orderId` | orders-service, order-manage-queue | Solicita cancelamento se o status permitir. |
-| `user.order.status` | `orderId` | orders-service, order-manage-queue | Responde com `order.status`. |
-| `user.payment.retry` | `orderId` | payments-service, order-manage-queue | Reaprova cobrança `DECLINED`. |
-| `user.delivery.eta` | `orderId` | delivery-service, order-manage-queue | Responde com `delivery.eta`. |
-| `user.catalog.check` | `sku`, `itemName` | catalog-service, order-manage-queue | Responde com `catalog.checked`. |
-| `user.support.complaint` | `message` | order-manage-queue | Fica na fila da operação para resposta manual. |
+| `user.order.place` | `orderId`, `items[]`, `total` | orders-service, order-manage-queue | Creates a `PENDING_APPROVAL` order and schedules automatic approval. |
+| `user.order.cancel` | `orderId` | orders-service, order-manage-queue | Requests cancellation if the status allows it. |
+| `user.order.status` | `orderId` | orders-service, order-manage-queue | Replies with `order.status`. |
+| `user.payment.retry` | `orderId` | payments-service, order-manage-queue | Re-approves a `DECLINED` charge. |
+| `user.delivery.eta` | `orderId` | delivery-service, order-manage-queue | Replies with `delivery.eta`. |
+| `user.catalog.check` | `sku`, `itemName` | catalog-service, order-manage-queue | Replies with `catalog.checked`. |
+| `user.support.complaint` | `message` | order-manage-queue | Stays in the operations queue for a manual reply. |
 
-## Comandos da operação (`order-manage-queue`)
+## Operations commands (`order-manage-queue`)
 
-| Routing key | Payload principal | Consumidores | Efeito |
+| Routing key | Main payload | Consumers | Effect |
 |---|---|---|---|
-| `manager.order.approve` | `orderId`, `targetUser` | orders-service | Confirma o pedido (se pendente). |
-| `manager.order.cancel` | `orderId`, `reason`, `targetUser` | orders-service | Cancela e dispara compensações. |
-| `manager.payment.refund` | `orderId`, `targetUser` | payments-service | Estorna pagamento aprovado. |
-| `manager.delivery.dispatch` | `orderId`, `targetUser` | delivery-service | Antecipa o despacho. |
-| `manager.catalog.restock` | `sku`, `quantity` | catalog-service | Incrementa estoque; resultado é broadcast. |
-| `manager.reply` | `targetUser`, `message` | notify-service | Notificação direta ao cliente. |
-| `manager.broadcast` | `message` | notify-service | Notificação para todos (`user = "*"`). |
+| `manager.order.approve` | `orderId`, `targetUser` | orders-service | Confirms the order (if pending). |
+| `manager.order.cancel` | `orderId`, `reason`, `targetUser` | orders-service | Cancels and triggers compensations. |
+| `manager.payment.refund` | `orderId`, `targetUser` | payments-service | Refunds an approved payment. |
+| `manager.delivery.dispatch` | `orderId`, `targetUser` | delivery-service | Dispatches the delivery earlier. |
+| `manager.catalog.restock` | `sku`, `quantity` | catalog-service | Increases stock; the result is broadcast. |
+| `manager.reply` | `targetUser`, `message` | notify-service | Direct notification to the customer. |
+| `manager.broadcast` | `message` | notify-service | Notification to everyone (`user = "*"`). |
 
-## Eventos de domínio
+## Domain events
 
 ### orders-service
 
-| Evento | Consumidores | Descrição |
+| Event | Consumers | Description |
 |---|---|---|
-| `order.created` | notify-service, order-manage-queue | Pedido criado aguardando aprovação. |
-| `order.confirmed` | catalog-service, notify-service, order-manage-queue | Pedido aprovado; inicia reserva de estoque. |
-| `order.cancelled` | catalog-service, payments-service, delivery-service, notify-service, order-manage-queue | Pedido cancelado; dispara compensações. |
-| `order.cancel_rejected` | notify-service, order-manage-queue | Status não permite cancelamento (ex.: entregue). |
-| `order.not_found` | notify-service, order-manage-queue | Pedido inexistente. |
-| `order.status` | notify-service, order-manage-queue | Resposta de consulta de status. |
+| `order.created` | notify-service, order-manage-queue | Order created and waiting for approval. |
+| `order.confirmed` | catalog-service, notify-service, order-manage-queue | Order approved; starts stock reservation. |
+| `order.cancelled` | catalog-service, payments-service, delivery-service, notify-service, order-manage-queue | Order cancelled; triggers compensations. |
+| `order.cancel_rejected` | notify-service, order-manage-queue | The status no longer allows cancellation (e.g. delivered). |
+| `order.not_found` | notify-service, order-manage-queue | Order does not exist. |
+| `order.status` | notify-service, order-manage-queue | Status query response. |
 
 ### catalog-service
 
-| Evento | Consumidores | Descrição |
+| Event | Consumers | Description |
 |---|---|---|
-| `catalog.reserved` | payments-service, notify-service, order-manage-queue | Estoque reservado; habilita cobrança. |
-| `catalog.rejected` | orders-service, notify-service, order-manage-queue | Estoque insuficiente; pedido é rejeitado. |
-| `catalog.checked` | notify-service, order-manage-queue | Resposta de consulta de estoque. |
-| `catalog.restocked` | notify-service, order-manage-queue | Reposição realizada (broadcast). |
-| `catalog.released` | notify-service, order-manage-queue | Estoque devolvido por cancelamento. |
+| `catalog.reserved` | payments-service, notify-service, order-manage-queue | Stock reserved; enables charging. |
+| `catalog.rejected` | orders-service, notify-service, order-manage-queue | Insufficient stock; the order is rejected. |
+| `catalog.checked` | notify-service, order-manage-queue | Stock query response. |
+| `catalog.restocked` | notify-service, order-manage-queue | Restock completed (broadcast). |
+| `catalog.released` | notify-service, order-manage-queue | Stock returned due to cancellation. |
 
 ### payments-service
 
-| Evento | Consumidores | Descrição |
+| Event | Consumers | Description |
 |---|---|---|
-| `payment.approved` | delivery-service, orders-service, notify-service, order-manage-queue | Pagamento aprovado; criação da entrega. |
-| `payment.declined` | orders-service, notify-service, order-manage-queue | Pagamento recusado. |
-| `payment.refunded` | notify-service, order-manage-queue | Estorno por operação ou cancelamento. |
-| `payment.info` | notify-service, order-manage-queue | Informação quando a ação não se aplica. |
-| `payment.retry_failed` | notify-service, order-manage-queue | Não havia cobrança para retentar. |
+| `payment.approved` | delivery-service, orders-service, notify-service, order-manage-queue | Payment approved; creates the delivery. |
+| `payment.declined` | orders-service, notify-service, order-manage-queue | Payment declined. |
+| `payment.refunded` | notify-service, order-manage-queue | Refund by operations or cancellation. |
+| `payment.info` | notify-service, order-manage-queue | Information when the action does not apply. |
+| `payment.retry_failed` | notify-service, order-manage-queue | No charge existed to retry. |
 
 ### delivery-service
 
-| Evento | Consumidores | Descrição |
+| Event | Consumers | Description |
 |---|---|---|
-| `delivery.assigned` | notify-service, order-manage-queue | Entregador e ETA definidos. |
-| `delivery.dispatched` | notify-service, order-manage-queue | Pedido saiu para entrega. |
-| `delivery.delivered` | orders-service, notify-service, order-manage-queue | Entrega concluída. |
-| `delivery.cancelled` | notify-service, order-manage-queue | Entrega cancelada. |
-| `delivery.eta` | notify-service, order-manage-queue | Resposta de previsão. |
-| `delivery.info` | notify-service, order-manage-queue | Ação de entrega não aplicável. |
+| `delivery.assigned` | notify-service, order-manage-queue | Courier and ETA assigned. |
+| `delivery.dispatched` | notify-service, order-manage-queue | Order out for delivery. |
+| `delivery.delivered` | orders-service, notify-service, order-manage-queue | Delivery completed. |
+| `delivery.cancelled` | notify-service, order-manage-queue | Delivery cancelled. |
+| `delivery.eta` | notify-service, order-manage-queue | ETA query response. |
+| `delivery.info` | notify-service, order-manage-queue | Delivery action not applicable. |
 
 ### notify-service
 
-| Evento | Consumidores | Descrição |
+| Event | Consumers | Description |
 |---|---|---|
-| `notification.created` | order-user, (opcionalmente push/e-mail) | Notificação pronta para exibição, com `user`, `title`, `severity` e payload original. |
+| `notification.created` | order-user, (optionally push/email) | Notification ready for display, with `user`, `title`, `severity`, and original payload. |
 
 ## Envelope
 
@@ -85,8 +85,8 @@ Exchange: `orders` (topic, durável). Routing key = `type` do envelope.
   "source": "payments-service",
   "occurredAt": "2026-11-10T14:35:12.345Z",
   "correlationId": "4f0a...",
-  "user": "Ana",
-  "message": "Pagamento de R$ 91.80 aprovado para o pedido #4f0a12bc.",
+  "user": "Alice",
+  "message": "Payment of $91.80 approved for order #4f0a12bc.",
   "payload": {
     "orderId": "4f0a12bc-...",
     "paymentId": "8c21...",
@@ -96,21 +96,21 @@ Exchange: `orders` (topic, durável). Routing key = `type` do envelope.
 }
 ```
 
-## Convenções
+## Conventions
 
-- `correlationId` acompanha o pedido quando possível.
-- `user` é o destinatário da notificação. `*` significa broadcast.
-- `message` é texto pronto para o usuário final (pt-BR).
-- `payload` é estruturado para integração e depuração.
-- Consumidores devem ser idempotentes; mensagens podem ser reentregues.
-- Novos eventos devem ser aditivos. Evite alterar semântica de payloads existentes.
+- `correlationId` follows the order whenever possible.
+- `user` is the notification recipient. `*` means broadcast.
+- `message` is text ready for the end user (English).
+- `payload` is structured for integration and debugging.
+- Consumers must be idempotent; messages can be redelivered.
+- New events should be additive. Avoid changing the semantics of existing payloads.
 
-## DLQ / retry (não implementado)
+## DLQ / retry (not implemented)
 
-Hoje, uma exceção no handler resulta em `nack` sem requeue. Em produção:
+Today an exception in a handler results in `nack` without requeue. In production:
 
-1. declarar `orders.dlx` + `orders.dead-letter`;
-2. configurar `x-dead-letter-exchange` nas filas;
-3. usar retry com TTL/backoff e contador de tentativas no header;
-4. mover para DLQ após N tentativas;
-5. alertar e permitir reprocessamento manual.
+1. declare `orders.dlx` + `orders.dead-letter`;
+2. configure `x-dead-letter-exchange` on the queues;
+3. use retry with TTL/backoff and a retry counter in the header;
+4. move to the DLQ after N attempts;
+5. alert and allow manual reprocessing.

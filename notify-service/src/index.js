@@ -1,4 +1,4 @@
-import { config } from './config.js';
+﻿import { config } from './config.js';
 import { Broker } from './infrastructure/broker.js';
 import { createDb } from './infrastructure/db.js';
 import { createNotificationHandler } from './application/notificationHandler.js';
@@ -19,7 +19,7 @@ broker.subscribe(
   config.queue,
   ['order.*', 'catalog.*', 'payment.*', 'delivery.*', 'manager.reply', 'manager.broadcast'],
   async (event) => {
-    logger.info(`[notify] recebido ${event.type} de ${event.source}`);
+    logger.info(`[notify] received ${event.type} from ${event.source}`);
     await handler(event);
   }
 );
@@ -46,7 +46,7 @@ const server = startHttpServer({
 await broker.start();
 
 async function shutdown(signal) {
-  logger.info(`[notify] recebido ${signal}, encerrando...`);
+  logger.info(`[notify] received ${signal}, shutting down...`);
   server.close();
   await broker.stop();
   db.close();

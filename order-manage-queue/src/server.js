@@ -23,7 +23,7 @@ function validName(value) {
 
 function requireOrderId(payload) {
   if (!payload?.orderId || typeof payload.orderId !== 'string') {
-    throw Object.assign(new Error('Informe o código do pedido'), { statusCode: 400 });
+    throw Object.assign(new Error('Enter the order code'), { statusCode: 400 });
   }
   return payload.orderId.slice(0, 80);
 }
@@ -31,7 +31,7 @@ function requireOrderId(payload) {
 function requireTargetUser(payload) {
   const target = String(payload?.targetUser || '').trim();
   if (!validName(target)) {
-    throw Object.assign(new Error('Informe o usuário de destino'), { statusCode: 400 });
+    throw Object.assign(new Error('Enter the target user'), { statusCode: 400 });
   }
   return target;
 }
@@ -44,7 +44,7 @@ function buildAction(operator, action, payload) {
       type: 'manager.order.approve',
       user: targetUser,
       payload: { orderId },
-      message: `${operator} aprovou o pedido #${shortId(orderId)} do cliente ${targetUser}.`
+      message: `${operator} approved order #${shortId(orderId)} for customer ${targetUser}.`
     };
   }
 
@@ -56,9 +56,9 @@ function buildAction(operator, action, payload) {
       user: targetUser,
       payload: {
         orderId,
-        reason: String(payload?.reason || 'Cancelamento solicitado pela operação').slice(0, 200)
+        reason: String(payload?.reason || 'Cancellation requested by operations').slice(0, 200)
       },
-      message: `${operator} cancelou o pedido #${shortId(orderId)} do cliente ${targetUser}.`
+      message: `${operator} cancelled order #${shortId(orderId)} for customer ${targetUser}.`
     };
   }
 
@@ -69,7 +69,7 @@ function buildAction(operator, action, payload) {
       type: 'manager.payment.refund',
       user: targetUser,
       payload: { orderId },
-      message: `${operator} solicitou o reembolso do pedido #${shortId(orderId)} de ${targetUser}.`
+      message: `${operator} requested a refund for order #${shortId(orderId)} from ${targetUser}.`
     };
   }
 
@@ -80,29 +80,29 @@ function buildAction(operator, action, payload) {
       type: 'manager.delivery.dispatch',
       user: targetUser,
       payload: { orderId },
-      message: `${operator} solicitou o despacho da entrega do pedido #${shortId(orderId)} de ${targetUser}.`
+      message: `${operator} requested dispatch of order #${shortId(orderId)} for ${targetUser}.`
     };
   }
 
   if (action === 'restock') {
     const sku = String(payload?.sku || '').slice(0, 80);
     const quantity = Number(payload?.quantity);
-    if (!sku) throw Object.assign(new Error('Selecione o SKU para reposição'), { statusCode: 400 });
+    if (!sku) throw Object.assign(new Error('Select an SKU to restock'), { statusCode: 400 });
     if (!Number.isFinite(quantity) || quantity < 1 || quantity > 999) {
-      throw Object.assign(new Error('Quantidade de reposição inválida'), { statusCode: 400 });
+      throw Object.assign(new Error('Invalid restock quantity'), { statusCode: 400 });
     }
     return {
       type: 'manager.catalog.restock',
       user: '*',
       payload: { sku, quantity: Math.floor(quantity) },
-      message: `${operator} solicitou reposição de ${Math.floor(quantity)} unidade(s) do SKU ${sku}.`
+      message: `${operator} requested a restock of ${Math.floor(quantity)} unit(s) for SKU ${sku}.`
     };
   }
 
   if (action === 'reply-user') {
     const targetUser = requireTargetUser(payload);
     const text = String(payload?.message || '').trim().slice(0, 500);
-    if (text.length < 2) throw Object.assign(new Error('Escreva a mensagem de resposta'), { statusCode: 400 });
+    if (text.length < 2) throw Object.assign(new Error('Write the reply message'), { statusCode: 400 });
     return {
       type: 'manager.reply',
       user: targetUser,
@@ -113,7 +113,7 @@ function buildAction(operator, action, payload) {
 
   if (action === 'broadcast') {
     const text = String(payload?.message || '').trim().slice(0, 500);
-    if (text.length < 2) throw Object.assign(new Error('Escreva o comunicado'), { statusCode: 400 });
+    if (text.length < 2) throw Object.assign(new Error('Write the announcement'), { statusCode: 400 });
     return {
       type: 'manager.broadcast',
       user: '*',
@@ -122,7 +122,7 @@ function buildAction(operator, action, payload) {
     };
   }
 
-  throw Object.assign(new Error('Ação não suportada'), { statusCode: 400 });
+  throw Object.assign(new Error('Unsupported action'), { statusCode: 400 });
 }
 
 export function createManagerServer({
@@ -192,7 +192,7 @@ export function createManagerServer({
           const data = await response.json();
           json(res, 200, { items: data.items || [], source: 'catalog-service' });
         } catch (err) {
-          logger.warn(`[manage] catálogo indisponível (${err.message}); usando fallback`);
+          logger.warn(`[manage] catalog unavailable (${err.message}); using fallback`);
           json(res, 200, { items: FALLBACK_CATALOG, source: 'fallback' });
         }
         return;
@@ -200,13 +200,13 @@ export function createManagerServer({
 
       if (url.pathname === '/api/actions' && req.method === 'POST') {
         const body = await readJson(req);
-        const operator = String(body.operator || 'Operação').trim().slice(0, 40);
+        const operator = String(body.operator || 'Operations').trim().slice(0, 40);
         if (!validName(operator)) {
-          json(res, 400, { error: 'Informe o nome do operador' });
+          json(res, 400, { error: 'Enter the operator name' });
           return;
         }
         if (!broker.connected) {
-          json(res, 503, { error: 'Mensageria indisponível. Tente novamente em instantes.' });
+          json(res, 503, { error: 'Messaging is unavailable. Try again shortly.' });
           return;
         }
 
@@ -260,15 +260,15 @@ export function createManagerServer({
         return;
       }
 
-      json(res, 404, { error: 'Rota não encontrada' });
+      json(res, 404, { error: 'Route not found' });
     } catch (err) {
       logger.error(`[http] ${err.stack || err.message}`);
-      json(res, err.statusCode || 500, { error: err.message || 'Erro interno' });
+      json(res, err.statusCode || 500, { error: err.message || 'Internal server error' });
     }
   });
 
   server.listen(port, '0.0.0.0', () => {
-    logger.info(`[http] ${serviceName} ouvindo em http://0.0.0.0:${port}`);
+    logger.info(`[http] ${serviceName} listening on http://0.0.0.0:${port}`);
   });
 
   return server;

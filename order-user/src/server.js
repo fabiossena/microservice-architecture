@@ -19,7 +19,7 @@ function shortId(id) {
 }
 
 function money(value) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0);
 }
 
 function validUser(user) {
@@ -28,7 +28,7 @@ function validUser(user) {
 
 function requireOrderId(payload) {
   if (!payload?.orderId || typeof payload.orderId !== 'string') {
-    throw Object.assign(new Error('Informe o código do pedido'), { statusCode: 400 });
+    throw Object.assign(new Error('Enter the order code'), { statusCode: 400 });
   }
   return payload.orderId.slice(0, 80);
 }
@@ -39,12 +39,12 @@ function buildAction(user, action, payload) {
     const itemName = String(payload?.itemName || '').slice(0, 120);
     const quantity = Number(payload?.quantity);
     const unitPrice = Number(payload?.unitPrice);
-    if (!sku || !itemName) throw Object.assign(new Error('Selecione um item do catálogo'), { statusCode: 400 });
+    if (!sku || !itemName) throw Object.assign(new Error('Select a catalog item'), { statusCode: 400 });
     if (!Number.isFinite(quantity) || quantity < 1 || quantity > 99) {
-      throw Object.assign(new Error('Quantidade inválida'), { statusCode: 400 });
+      throw Object.assign(new Error('Invalid quantity'), { statusCode: 400 });
     }
     if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
-      throw Object.assign(new Error('Preço inválido para o item'), { statusCode: 400 });
+      throw Object.assign(new Error('Invalid item price'), { statusCode: 400 });
     }
     const orderId = typeof payload?.orderId === 'string' && payload.orderId
       ? payload.orderId.slice(0, 80)
@@ -57,7 +57,7 @@ function buildAction(user, action, payload) {
         items: [{ sku, name: itemName, quantity: Math.floor(quantity), unitPrice }],
         total
       },
-      message: `${user} solicitou ${Math.floor(quantity)}x ${itemName} (${money(total)}) no pedido #${shortId(orderId)}.`
+      message: `${user} requested ${Math.floor(quantity)}x ${itemName} (${money(total)}) on order #${shortId(orderId)}.`
     };
   }
 
@@ -66,7 +66,7 @@ function buildAction(user, action, payload) {
     return {
       type: 'user.order.cancel',
       payload: { orderId },
-      message: `${user} solicitou o cancelamento do pedido #${shortId(orderId)}.`
+      message: `${user} requested cancellation of order #${shortId(orderId)}.`
     };
   }
 
@@ -75,7 +75,7 @@ function buildAction(user, action, payload) {
     return {
       type: 'user.order.status',
       payload: { orderId },
-      message: `${user} consultou o status do pedido #${shortId(orderId)}.`
+      message: `${user} checked the status of order #${shortId(orderId)}.`
     };
   }
 
@@ -84,7 +84,7 @@ function buildAction(user, action, payload) {
     return {
       type: 'user.payment.retry',
       payload: { orderId },
-      message: `${user} pediu uma nova tentativa de pagamento para o pedido #${shortId(orderId)}.`
+      message: `${user} requested a new payment attempt for order #${shortId(orderId)}.`
     };
   }
 
@@ -93,32 +93,32 @@ function buildAction(user, action, payload) {
     return {
       type: 'user.delivery.eta',
       payload: { orderId },
-      message: `${user} consultou a previsão de entrega do pedido #${shortId(orderId)}.`
+      message: `${user} checked the delivery ETA for order #${shortId(orderId)}.`
     };
   }
 
   if (action === 'check-stock') {
     const sku = String(payload?.sku || '').slice(0, 80);
     const itemName = String(payload?.itemName || sku).slice(0, 120);
-    if (!sku) throw Object.assign(new Error('Selecione um item'), { statusCode: 400 });
+    if (!sku) throw Object.assign(new Error('Select an item'), { statusCode: 400 });
     return {
       type: 'user.catalog.check',
       payload: { sku, itemName },
-      message: `${user} consultou o estoque de ${itemName}.`
+      message: `${user} checked stock for ${itemName}.`
     };
   }
 
   if (action === 'complaint') {
     const text = String(payload?.message || '').trim().slice(0, 500);
-    if (text.length < 3) throw Object.assign(new Error('Descreva a solicitação'), { statusCode: 400 });
+    if (text.length < 3) throw Object.assign(new Error('Describe your request'), { statusCode: 400 });
     return {
       type: 'user.support.complaint',
       payload: { message: text },
-      message: `${user} abriu uma solicitação para a operação: ${text}`
+      message: `${user} opened a request for operations: ${text}`
     };
   }
 
-  throw Object.assign(new Error('Ação não suportada'), { statusCode: 400 });
+  throw Object.assign(new Error('Unsupported action'), { statusCode: 400 });
 }
 
 export function createViewServer({ port, serviceName, db, broker, catalogUrl, sseClients, logger }) {
@@ -166,7 +166,7 @@ export function createViewServer({ port, serviceName, db, broker, catalogUrl, ss
         const user = url.searchParams.get('user');
         if (user) {
           if (!validUser(user)) {
-            json(res, 400, { error: 'Usuário inválido' });
+            json(res, 400, { error: 'Invalid user' });
             return;
           }
           json(res, 200, { items: db.historyForUser(user.trim(), 100) });
@@ -185,7 +185,7 @@ export function createViewServer({ port, serviceName, db, broker, catalogUrl, ss
           const data = await response.json();
           json(res, 200, { items: data.items || [], source: 'catalog-service' });
         } catch (err) {
-          logger.warn(`[order-user] catálogo indisponível (${err.message}); usando fallback`);
+          logger.warn(`[order-user] catalog unavailable (${err.message}); using fallback`);
           json(res, 200, { items: FALLBACK_CATALOG, source: 'fallback' });
         }
         return;
@@ -195,11 +195,11 @@ export function createViewServer({ port, serviceName, db, broker, catalogUrl, ss
         const body = await readJson(req);
         const user = String(body.user || '').trim();
         if (!validUser(user)) {
-          json(res, 400, { error: 'Escolha um nome de usuário com 2 a 40 caracteres' });
+          json(res, 400, { error: 'Choose a username with 2 to 40 characters' });
           return;
         }
         if (!broker.connected) {
-          json(res, 503, { error: 'Mensageria indisponível. Tente novamente em instantes.' });
+          json(res, 503, { error: 'Messaging is unavailable. Try again shortly.' });
           return;
         }
 
@@ -251,15 +251,15 @@ export function createViewServer({ port, serviceName, db, broker, catalogUrl, ss
         return;
       }
 
-      json(res, 404, { error: 'Rota não encontrada' });
+      json(res, 404, { error: 'Route not found' });
     } catch (err) {
       logger.error(`[http] ${err.stack || err.message}`);
-      json(res, err.statusCode || 500, { error: err.message || 'Erro interno' });
+      json(res, err.statusCode || 500, { error: err.message || 'Internal server error' });
     }
   });
 
   server.listen(port, '0.0.0.0', () => {
-    logger.info(`[http] ${serviceName} ouvindo em http://0.0.0.0:${port}`);
+    logger.info(`[http] ${serviceName} listening on http://0.0.0.0:${port}`);
   });
 
   return server;

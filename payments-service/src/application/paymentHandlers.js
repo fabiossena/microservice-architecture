@@ -11,7 +11,7 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
       if (!orderId) return;
 
       if (db.byOrder(orderId)) {
-        logger.info(`[payments] pedido ${orderId} já possui cobrança`);
+        logger.info(`[payments] order ${orderId} already has a charge`);
         return;
       }
 
@@ -23,7 +23,7 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
       if (decision.status === PAYMENT_STATUS.APPROVED) {
         await publish('payment.approved', {
           user: payment.user,
-          message: `Pagamento de ${formatMoney(amount)} aprovado para o pedido #${String(orderId).slice(0, 8)}.`,
+          message: `Payment of ${formatMoney(amount)} approved for order #${String(orderId).slice(0, 8)}.`,
           payload: {
             orderId,
             paymentId: payment.id,
@@ -35,7 +35,7 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
       } else {
         await publish('payment.declined', {
           user: payment.user,
-          message: `Pagamento de ${formatMoney(amount)} recusado: ${decision.reason}. Tente novamente pelo painel do cliente.`,
+          message: `Payment of ${formatMoney(amount)} declined: ${decision.reason}. Try again from the customer panel.`,
           payload: {
             orderId,
             paymentId: payment.id,
@@ -54,7 +54,7 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
       if (!payment) {
         await publish('payment.retry_failed', {
           user: event.user,
-          message: 'Não há cobrança registrada para este pedido.',
+          message: 'No charge is registered for this order.',
           payload: { orderId }
         });
         return;
@@ -63,17 +63,17 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
       if (payment.status === PAYMENT_STATUS.APPROVED) {
         await publish('payment.info', {
           user: payment.user,
-          message: `O pagamento do pedido #${String(orderId).slice(0, 8)} já está aprovado.`,
+          message: `Payment for order #${String(orderId).slice(0, 8)} is already approved.`,
           payload: { orderId, status: payment.status }
         });
         return;
       }
 
       if (payment.status === PAYMENT_STATUS.DECLINED) {
-        db.updateStatus(orderId, PAYMENT_STATUS.APPROVED, 'Aprovado na nova tentativa (simulação)');
+        db.updateStatus(orderId, PAYMENT_STATUS.APPROVED, 'Approved on retry (simulation)');
         await publish('payment.approved', {
           user: payment.user,
-          message: `Nova tentativa aprovada: pagamento de ${formatMoney(payment.amount)} confirmado para o pedido #${String(orderId).slice(0, 8)}.`,
+          message: `Retry approved: payment of ${formatMoney(payment.amount)} confirmed for order #${String(orderId).slice(0, 8)}.`,
           payload: {
             orderId,
             paymentId: payment.id,
@@ -88,7 +88,7 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
 
       await publish('payment.info', {
         user: payment.user,
-        message: `O pagamento do pedido #${String(orderId).slice(0, 8)} não pode ser reprocessado (status: ${payment.status}).`,
+        message: `Payment for order #${String(orderId).slice(0, 8)} cannot be retried (status: ${payment.status}).`,
         payload: { orderId, status: payment.status }
       });
     },
@@ -99,7 +99,7 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
       if (!payment) {
         await publish('payment.info', {
           user: event.user,
-          message: `Não existe pagamento para o pedido #${String(orderId || '').slice(0, 8)}.`,
+          message: `No payment exists for order #${String(orderId || '').slice(0, 8)}.`,
           payload: { orderId }
         });
         return;
@@ -108,7 +108,7 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
       if (payment.status === PAYMENT_STATUS.REFUNDED) {
         await publish('payment.info', {
           user: payment.user,
-          message: `O pagamento do pedido #${String(orderId).slice(0, 8)} já foi reembolsado.`,
+          message: `Payment for order #${String(orderId).slice(0, 8)} has already been refunded.`,
           payload: { orderId, status: payment.status }
         });
         return;
@@ -117,16 +117,16 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
       if (payment.status !== PAYMENT_STATUS.APPROVED) {
         await publish('payment.info', {
           user: payment.user,
-          message: `Não é possível reembolsar: o pagamento está como ${payment.status}.`,
+          message: `Cannot refund: payment status is ${payment.status}.`,
           payload: { orderId, status: payment.status }
         });
         return;
       }
 
-      db.updateStatus(orderId, PAYMENT_STATUS.REFUNDED, 'Reembolso solicitado pela operação');
+      db.updateStatus(orderId, PAYMENT_STATUS.REFUNDED, 'Refund requested by operations');
       await publish('payment.refunded', {
         user: payment.user,
-        message: `Reembolso de ${formatMoney(payment.amount)} processado para o pedido #${String(orderId).slice(0, 8)}.`,
+        message: `Refund of ${formatMoney(payment.amount)} processed for order #${String(orderId).slice(0, 8)}.`,
         payload: {
           orderId,
           paymentId: payment.id,
@@ -143,10 +143,10 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
       if (!payment) return;
 
       if (payment.status === PAYMENT_STATUS.APPROVED) {
-        db.updateStatus(orderId, PAYMENT_STATUS.REFUNDED, 'Estorno automático por cancelamento');
+        db.updateStatus(orderId, PAYMENT_STATUS.REFUNDED, 'Automatic refund due to cancellation');
         await publish('payment.refunded', {
           user: payment.user,
-          message: `Pedido #${String(orderId).slice(0, 8)} cancelado: estorno automático de ${formatMoney(payment.amount)} iniciado.`,
+          message: `Order #${String(orderId).slice(0, 8)} cancelled: automatic refund of ${formatMoney(payment.amount)} started.`,
           payload: {
             orderId,
             paymentId: payment.id,
@@ -157,7 +157,7 @@ export function createPaymentHandlers({ db, broker, logger, paymentLimit }) {
           correlationId: orderId
         });
       } else if (payment.status === PAYMENT_STATUS.PENDING) {
-        db.updateStatus(orderId, PAYMENT_STATUS.CANCELLED, 'Pedido cancelado');
+        db.updateStatus(orderId, PAYMENT_STATUS.CANCELLED, 'Order cancelled');
       }
     }
   };

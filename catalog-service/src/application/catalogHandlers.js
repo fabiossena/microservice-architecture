@@ -2,7 +2,7 @@ import { formatMissing, validateItems } from '../domain/catalog.js';
 
 export function createCatalogHandlers({ db, broker, logger }) {
   const money = (value) =>
-    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0);
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0);
 
   async function publish(type, { user, message, payload = {}, correlationId = null }) {
     return broker.publish(type, { user, message, payload, correlationId });
@@ -15,7 +15,7 @@ export function createCatalogHandlers({ db, broker, logger }) {
       if (!orderId) return;
 
       if (db.getReservation(orderId)) {
-        logger.info(`[catalog] pedido ${orderId} já possui reserva`);
+        logger.info(`[catalog] order ${orderId} already has a reservation`);
         return;
       }
 
@@ -25,7 +25,7 @@ export function createCatalogHandlers({ db, broker, logger }) {
       if (!result.ok) {
         await publish('catalog.rejected', {
           user,
-          message: `Não foi possível reservar o estoque do pedido #${String(orderId).slice(0, 8)}: ${formatMissing(result.missing)}.`,
+          message: `Could not reserve stock for order #${String(orderId).slice(0, 8)}: ${formatMissing(result.missing)}.`,
           payload: { orderId, missing: result.missing },
           correlationId: orderId
         });
@@ -34,7 +34,7 @@ export function createCatalogHandlers({ db, broker, logger }) {
 
       await publish('catalog.reserved', {
         user,
-        message: `Estoque reservado para o pedido #${String(orderId).slice(0, 8)}. Valor a cobrar: ${money(total)}.`,
+        message: `Stock reserved for order #${String(orderId).slice(0, 8)}. Amount to charge: ${money(total)}.`,
         payload: { orderId, user, total: Number(total) || 0, items },
         correlationId: orderId
       });
@@ -46,14 +46,14 @@ export function createCatalogHandlers({ db, broker, logger }) {
       if (!item) {
         await publish('catalog.checked', {
           user: event.user,
-          message: `Item "${sku || 'não informado'}" não encontrado no catálogo.`,
+          message: `Item "${sku || 'not provided'}" was not found in the catalog.`,
           payload: { sku }
         });
         return;
       }
       await publish('catalog.checked', {
         user: event.user,
-        message: `Estoque de ${item.name}: ${item.stock} unidade(s), por ${money(item.price)}.`,
+        message: `Stock for ${item.name}: ${item.stock} unit(s), at ${money(item.price)}.`,
         payload: { sku: item.sku, name: item.name, stock: item.stock, price: item.price }
       });
     },
@@ -64,7 +64,7 @@ export function createCatalogHandlers({ db, broker, logger }) {
       if (!sku || !Number.isFinite(quantity) || quantity <= 0) {
         await publish('catalog.restocked', {
           user: '*',
-          message: 'Reposição ignorada: SKU ou quantidade inválidos.',
+          message: 'Restock ignored: invalid SKU or quantity.',
           payload: { sku, quantity }
         });
         return;
@@ -74,8 +74,8 @@ export function createCatalogHandlers({ db, broker, logger }) {
       await publish('catalog.restocked', {
         user: '*',
         message: item
-          ? `Reposição concluída: ${item.name} agora possui ${item.stock} unidade(s).`
-          : `SKU "${sku}" não encontrado para reposição.`,
+          ? `Restock completed: ${item.name} now has ${item.stock} unit(s).`
+          : `SKU "${sku}" was not found for restock.`,
         payload: item ? { sku: item.sku, name: item.name, stock: item.stock } : { sku }
       });
     },
@@ -87,7 +87,7 @@ export function createCatalogHandlers({ db, broker, logger }) {
       if (!released) return;
       await publish('catalog.released', {
         user: event.user,
-        message: `Estoque do pedido #${String(orderId).slice(0, 8)} devolvido ao catálogo.`,
+        message: `Stock for order #${String(orderId).slice(0, 8)} returned to the catalog.`,
         payload: { orderId, items: released },
         correlationId: orderId
       });

@@ -1,15 +1,15 @@
 # orders-service
 
-Serviço responsável pelo ciclo de vida do pedido (owner do agregado `Order`).
+Service responsible for the order lifecycle (owner of the `Order` aggregate).
 
-- Consome: `user.order.place`, `user.order.cancel`, `user.order.status`, `manager.order.approve`, `manager.order.cancel`, `catalog.rejected`, `payment.approved`, `payment.declined`, `delivery.delivered`
-- Publica: `order.created`, `order.confirmed`, `order.cancelled`, `order.cancel_rejected`, `order.not_found`, `order.status`
-- HTTP de apoio: `GET /health`, `GET /orders`
-- Banco: SQLite (`orders.db`)
+- Consumes: `user.order.place`, `user.order.cancel`, `user.order.status`, `manager.order.approve`, `manager.order.cancel`, `catalog.rejected`, `payment.approved`, `payment.declined`, `delivery.delivered`
+- Publishes: `order.created`, `order.confirmed`, `order.cancelled`, `order.cancel_rejected`, `order.not_found`, `order.status`
+- Support HTTP: `GET /health`, `GET /orders`
+- Database: SQLite (`orders.db`)
 
-O pedido nasce como `PENDING_APPROVAL`. A operação pode aprovar pelo painel `order-manage-queue`; caso ninguém atue, uma aprovação automática ocorre após `AUTO_APPROVE_MS` (padrão 12s) para manter a simulação fluindo.
+The order starts as `PENDING_APPROVAL`. Operations can approve it from the `order-manage-queue` panel; if nobody acts, automatic approval occurs after `AUTO_APPROVE_MS` (12s by default) to keep the simulation flowing.
 
-Aprovar dispara `order.confirmed`, que inicia a coreografia:
+Approval publishes `order.confirmed`, starting the choreography:
 
 ```
 order.confirmed -> catalog-service -> catalog.reserved -> payments-service

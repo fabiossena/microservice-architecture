@@ -1,4 +1,4 @@
-import { config } from './config.js';
+﻿import { config } from './config.js';
 import { Broker } from './infrastructure/broker.js';
 import { createDb } from './infrastructure/db.js';
 import { createDeliveryHandlers } from './application/deliveryHandlers.js';
@@ -26,7 +26,7 @@ const eventTypes = Object.keys(handlers).filter(
 
 broker.subscribe(config.queue, eventTypes, async (event) => {
   if (db.markProcessed(event.id, event.type)) return;
-  logger.info(`[delivery] processando ${event.type} de ${event.source}`);
+  logger.info(`[delivery] processing ${event.type} from ${event.source}`);
   await handlers[event.type](event);
 });
 
@@ -49,7 +49,7 @@ const server = startHttpServer({
 await broker.start();
 
 async function shutdown(signal) {
-  logger.info(`[delivery] recebido ${signal}, encerrando...`);
+  logger.info(`[delivery] received ${signal}, shutting down...`);
   handlers.shutdown();
   server.close();
   await broker.stop();

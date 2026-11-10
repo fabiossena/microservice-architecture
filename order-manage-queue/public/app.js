@@ -27,42 +27,42 @@ const els = {
 };
 
 const TITLES = {
-  'user.order.place': 'Pedido recebido do cliente',
-  'user.order.cancel': 'Cancelamento solicitado pelo cliente',
-  'user.order.status': 'Consulta de status',
-  'user.payment.retry': 'Nova tentativa de pagamento',
-  'user.delivery.eta': 'Consulta de entrega',
-  'user.catalog.check': 'Consulta de estoque',
-  'user.support.complaint': 'Solicitação de atendimento',
-  'order.created': 'Pedido criado',
-  'order.confirmed': 'Pedido aprovado',
-  'order.cancelled': 'Pedido cancelado',
-  'order.cancel_rejected': 'Cancelamento recusado',
-  'order.not_found': 'Pedido não encontrado',
-  'order.status': 'Status do pedido',
-  'catalog.reserved': 'Estoque reservado',
-  'catalog.rejected': 'Estoque insuficiente',
-  'catalog.checked': 'Estoque consultado',
-  'catalog.restocked': 'Estoque reposto',
-  'catalog.released': 'Estoque liberado',
-  'payment.approved': 'Pagamento aprovado',
-  'payment.declined': 'Pagamento recusado',
-  'payment.refunded': 'Reembolso processado',
-  'payment.info': 'Informação de pagamento',
-  'payment.retry_failed': 'Falha na nova tentativa',
-  'delivery.assigned': 'Entregador designado',
-  'delivery.dispatched': 'Pedido em rota',
-  'delivery.delivered': 'Pedido entregue',
-  'delivery.cancelled': 'Entrega cancelada',
-  'delivery.eta': 'Previsão de entrega',
-  'delivery.info': 'Informação de entrega',
-  'manager.order.approve': 'Aprovação enviada',
-  'manager.order.cancel': 'Cancelamento enviado',
-  'manager.payment.refund': 'Reembolso solicitado',
-  'manager.delivery.dispatch': 'Despacho solicitado',
-  'manager.catalog.restock': 'Reposição solicitada',
-  'manager.reply': 'Resposta ao cliente',
-  'manager.broadcast': 'Comunicado geral'
+  'user.order.place': 'Order received from customer',
+  'user.order.cancel': 'Cancellation requested by customer',
+  'user.order.status': 'Status check',
+  'user.payment.retry': 'New payment attempt',
+  'user.delivery.eta': 'Delivery check',
+  'user.catalog.check': 'Stock check',
+  'user.support.complaint': 'Support request',
+  'order.created': 'Order created',
+  'order.confirmed': 'Order approved',
+  'order.cancelled': 'Order cancelled',
+  'order.cancel_rejected': 'Cancellation rejected',
+  'order.not_found': 'Order not found',
+  'order.status': 'Order status',
+  'catalog.reserved': 'Stock reserved',
+  'catalog.rejected': 'Insufficient stock',
+  'catalog.checked': 'Stock checked',
+  'catalog.restocked': 'Stock restocked',
+  'catalog.released': 'Stock released',
+  'payment.approved': 'Payment approved',
+  'payment.declined': 'Payment declined',
+  'payment.refunded': 'Refund processed',
+  'payment.info': 'Payment information',
+  'payment.retry_failed': 'Retry failed',
+  'delivery.assigned': 'Courier assigned',
+  'delivery.dispatched': 'Order out for delivery',
+  'delivery.delivered': 'Order delivered',
+  'delivery.cancelled': 'Delivery cancelled',
+  'delivery.eta': 'Delivery estimate',
+  'delivery.info': 'Delivery information',
+  'manager.order.approve': 'Approval sent',
+  'manager.order.cancel': 'Cancellation sent',
+  'manager.payment.refund': 'Refund requested',
+  'manager.delivery.dispatch': 'Dispatch requested',
+  'manager.catalog.restock': 'Restock requested',
+  'manager.reply': 'Reply to customer',
+  'manager.broadcast': 'General announcement'
 };
 
 function toast(message, type = 'info') {
@@ -77,7 +77,7 @@ function formatDate(value) {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? '—'
-    : date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'medium' });
+    : date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'medium' });
 }
 
 function shortId(id) {
@@ -85,17 +85,17 @@ function shortId(id) {
 }
 
 function formatMoney(value) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0);
 }
 
 function setConnection(connected) {
   els.connection.classList.toggle('online', connected);
   els.connection.classList.toggle('offline', !connected);
-  els.connectionLabel.textContent = connected ? 'Mensageria online' : 'Mensageria offline';
+  els.connectionLabel.textContent = connected ? 'Messaging online' : 'Messaging offline';
 }
 
 function saveContext() {
-  state.operator = els.operator.value.trim().slice(0, 40) || 'Operação';
+  state.operator = els.operator.value.trim().slice(0, 40) || 'Operations';
   state.targetUser = els.targetUser.value.trim().slice(0, 40);
   state.orderId = els.orderId.value.trim().slice(0, 80);
   sessionStorage.setItem('manage.operator', state.operator);
@@ -106,12 +106,12 @@ function saveContext() {
 function requireContext(needOrder = true) {
   saveContext();
   if (state.targetUser.length < 2) {
-    toast('Informe ou selecione o usuário de destino.', 'error');
+    toast('Enter or select the target user.', 'error');
     els.targetUser.focus();
     return false;
   }
   if (needOrder && !state.orderId) {
-    toast('Informe ou selecione o pedido.', 'error');
+    toast('Enter or select the order.', 'error');
     els.orderId.focus();
     return false;
   }
@@ -125,8 +125,8 @@ function selectMessage(item) {
   const orderId = item.payload?.orderId;
   if (orderId) els.orderId.value = orderId;
   saveContext();
-  els.selectionHint.textContent = `Contexto: ${state.targetUser || '—'}${orderId ? ` · pedido #${shortId(orderId)}` : ''}`;
-  toast(`Contexto atualizado para ${state.targetUser}${orderId ? ` · #${shortId(orderId)}` : ''}.`, 'info');
+  els.selectionHint.textContent = `Context: ${state.targetUser || '—'}${orderId ? ` · order #${shortId(orderId)}` : ''}`;
+  toast(`Context updated to ${state.targetUser}${orderId ? ` · #${shortId(orderId)}` : ''}.`, 'info');
 }
 
 function mergeMessage(item) {
@@ -138,7 +138,7 @@ function mergeMessage(item) {
 }
 
 function messageTitle(item) {
-  return TITLES[item.eventType] || (item.category === 'user' ? 'Mensagem do usuário' : item.eventType);
+  return TITLES[item.eventType] || (item.category === 'user' ? 'Customer message' : item.eventType);
 }
 
 function messageCard(item) {
@@ -177,26 +177,26 @@ function messageCard(item) {
 
   if (item.user) {
     const user = document.createElement('span');
-    user.textContent = item.user === '*' ? 'todos os usuários' : `usuário: ${item.user}`;
+    user.textContent = item.user === '*' ? 'all users' : `user: ${item.user}`;
     meta.appendChild(user);
   }
   if (item.actor) {
     const actor = document.createElement('span');
-    actor.textContent = `operador: ${item.actor}`;
+    actor.textContent = `operator: ${item.actor}`;
     meta.appendChild(actor);
   }
   if (item.payload?.orderId) {
     const order = document.createElement('span');
-    order.textContent = `pedido #${shortId(item.payload.orderId)}`;
+    order.textContent = `order #${shortId(item.payload.orderId)}`;
     meta.appendChild(order);
   }
   if (item.payload?.amount) {
     const amount = document.createElement('span');
-    amount.textContent = `valor: ${formatMoney(item.payload.amount)}`;
+    amount.textContent = `amount: ${formatMoney(item.payload.amount)}`;
     meta.appendChild(amount);
   }
   const source = document.createElement('span');
-  source.textContent = item.category === 'sent' ? 'enviado pela operação' : `origem: ${item.source || 'serviço'}`;
+  source.textContent = item.category === 'sent' ? 'sent by operations' : `source: ${item.source || 'service'}`;
   meta.appendChild(source);
 
   const routing = document.createElement('code');
@@ -209,7 +209,7 @@ function messageCard(item) {
     const select = document.createElement('button');
     select.type = 'button';
     select.className = 'btn mini select-btn';
-    select.textContent = 'Usar este contexto';
+    select.textContent = 'Use this context';
     select.addEventListener('click', () => selectMessage(item));
     card.appendChild(select);
   }
@@ -217,17 +217,17 @@ function messageCard(item) {
   const details = document.createElement('details');
   details.className = 'message-details';
   const summary = document.createElement('summary');
-  summary.textContent = 'Detalhes técnicos';
+  summary.textContent = 'Technical details';
   const pre = document.createElement('pre');
   pre.textContent = JSON.stringify(
     {
       id: item.id,
-      categoria: item.category,
-      direcao: item.direction,
-      evento: item.eventType,
-      origem: item.source,
-      usuario: item.user,
-      ator: item.actor,
+      category: item.category,
+      direction: item.direction,
+      event: item.eventType,
+      source: item.source,
+      user: item.user,
+      actor: item.actor,
       correlationId: item.correlationId,
       payload: item.payload
     },
@@ -257,10 +257,10 @@ function render() {
     empty.className = 'empty';
     empty.textContent =
       state.filter === 'user'
-        ? 'Nenhuma ação de cliente recebida ainda. Abra o portal do cliente e faça um pedido.'
+        ? 'No customer actions received yet. Open the customer portal and place an order.'
         : state.filter === 'system'
-          ? 'Nenhum evento de domínio recebido ainda.'
-          : 'Nenhum comando enviado pela operação nesta sessão.';
+          ? 'No domain events received yet.'
+          : 'No commands sent by operations in this session.';
     els.feed.appendChild(empty);
   } else {
     const fragment = document.createDocumentFragment();
@@ -269,9 +269,9 @@ function render() {
   }
 
   const descriptions = {
-    user: 'ações recebidas das filhas do order-user',
-    system: 'eventos de domínio dos serviços de pedido, catálogo, pagamento e entrega',
-    sent: 'comandos publicados pela operação'
+    user: 'actions received from order-user queues',
+    system: 'domain events from orders, catalog, payment, and delivery services',
+    sent: 'commands published by operations'
   };
   els.feedDescription.textContent = descriptions[state.filter];
 
@@ -296,7 +296,7 @@ function render() {
 async function loadMessages() {
   try {
     const response = await fetch('api/messages');
-    if (!response.ok) throw new Error('Falha ao carregar a fila');
+    if (!response.ok) throw new Error('Failed to load the queue');
     const data = await response.json();
     state.messages = data.items || [];
     render();
@@ -314,14 +314,14 @@ async function loadCatalog() {
     for (const item of state.catalog) {
       const option = document.createElement('option');
       option.value = item.sku;
-      option.textContent = `${item.name} · ${item.stock} em estoque`;
+      option.textContent = `${item.name} · ${item.stock} in stock`;
       els.restockSku.appendChild(option);
     }
     els.catalogHint.textContent = data.source === 'catalog-service'
-      ? `${state.catalog.length} itens carregados do catalog-service.`
-      : 'Catálogo local (catalog-service indisponível).';
+      ? `${state.catalog.length} items loaded from catalog-service.`
+      : 'Local catalog (catalog-service unavailable).';
   } catch (err) {
-    els.catalogHint.textContent = 'Não foi possível carregar o catálogo.';
+    els.catalogHint.textContent = 'Could not load the catalog.';
     toast(err.message, 'error');
   }
 }
@@ -336,9 +336,9 @@ async function sendAction(action, payload, button) {
       body: JSON.stringify({ operator: state.operator, action, payload })
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Falha ao enviar comando');
+    if (!response.ok) throw new Error(data.error || 'Failed to send command');
     mergeMessage(data.item);
-    toast('Comando publicado na fila de retorno.', 'info');
+    toast('Command published to the return queue.', 'info');
     if (action === 'reply-user' || action === 'broadcast') els.reply.value = '';
   } catch (err) {
     toast(err.message, 'error');
@@ -356,7 +356,7 @@ document.querySelectorAll('[data-manage-action]').forEach((button) => {
     if (action === 'broadcast') {
       const message = els.reply.value.trim();
       if (message.length < 2) {
-        toast('Escreva o comunicado geral.', 'error');
+        toast('Write the general announcement.', 'error');
         return;
       }
       sendAction(action, { message }, button);
@@ -367,7 +367,7 @@ document.querySelectorAll('[data-manage-action]').forEach((button) => {
       if (!requireContext(false)) return;
       const message = els.reply.value.trim();
       if (message.length < 2) {
-        toast('Escreva a mensagem de resposta.', 'error');
+        toast('Write the reply message.', 'error');
         return;
       }
       sendAction(action, { targetUser: state.targetUser, message }, button);
@@ -377,8 +377,8 @@ document.querySelectorAll('[data-manage-action]').forEach((button) => {
     if (action === 'restock') {
       const sku = els.restockSku.value;
       const quantity = Number(els.restockQuantity.value);
-      if (!sku) return toast('Selecione um item para repor.', 'error');
-      if (!Number.isFinite(quantity) || quantity < 1) return toast('Quantidade inválida.', 'error');
+      if (!sku) return toast('Select an item to restock.', 'error');
+      if (!Number.isFinite(quantity) || quantity < 1) return toast('Invalid quantity.', 'error');
       sendAction(action, { sku, quantity }, button);
       return;
     }
@@ -407,10 +407,10 @@ function connectStream() {
     try {
       const item = JSON.parse(event.data);
       if (mergeMessage(item) && item.category === 'user') {
-        toast(`Nova ação de ${item.user || 'cliente'}: ${messageTitle(item)}`, 'info');
+        toast(`New action from ${item.user || 'customer'}: ${messageTitle(item)}`, 'info');
       }
     } catch {
-      // ignora frames inválidos
+      // ignore invalid frames
     }
   });
   stream.addEventListener('error', () => setConnection(false));
@@ -426,14 +426,14 @@ async function checkHealth() {
   }
 }
 
-state.operator = sessionStorage.getItem('manage.operator') || 'Operação';
+state.operator = sessionStorage.getItem('manage.operator') || 'Operations';
 state.targetUser = sessionStorage.getItem('manage.targetUser') || '';
 state.orderId = sessionStorage.getItem('manage.orderId') || '';
 els.operator.value = state.operator;
 els.targetUser.value = state.targetUser;
 els.orderId.value = state.orderId;
 if (state.targetUser || state.orderId) {
-  els.selectionHint.textContent = `Contexto restaurado: ${state.targetUser || '—'}${state.orderId ? ` · pedido #${shortId(state.orderId)}` : ''}`;
+  els.selectionHint.textContent = `Restored context: ${state.targetUser || '—'}${state.orderId ? ` · order #${shortId(state.orderId)}` : ''}`;
 }
 
 loadMessages();

@@ -1,4 +1,4 @@
-﻿const NAMES = ['Ana', 'Bruno', 'Carla', 'Diego', 'Elena'];
+﻿const NAMES = ['Alice', 'Bob', 'Carol', 'Daniel', 'Emma'];
 
 const state = {
   user: '',
@@ -39,14 +39,14 @@ function shortId(id) {
 }
 
 function formatMoney(value) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0);
 }
 
 function formatDate(value) {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
     ? '—'
-    : date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'medium' });
+    : date.toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'medium' });
 }
 
 function toast(message, type = 'info') {
@@ -61,13 +61,13 @@ function setConnection(connected) {
   state.connected = connected;
   els.connection.classList.toggle('online', connected);
   els.connection.classList.toggle('offline', !connected);
-  els.connectionLabel.textContent = connected ? 'Mensageria online' : 'Mensageria offline';
+  els.connectionLabel.textContent = connected ? 'Messaging online' : 'Messaging offline';
 }
 
 function setUser(name, { reload = true } = {}) {
   const user = sanitizeUser(name);
   if (user.length < 2) {
-    toast('Informe um nome com pelo menos 2 caracteres.', 'error');
+    toast('Enter a name with at least 2 characters.', 'error');
     return;
   }
 
@@ -78,7 +78,7 @@ function setUser(name, { reload = true } = {}) {
   history.replaceState(null, '', url);
 
   els.userInput.value = user;
-  els.welcome.textContent = `Olá, ${user}`;
+  els.welcome.textContent = `Hello, ${user}`;
   els.avatar.textContent = user.charAt(0);
 
   state.orderId = sessionStorage.getItem(`order-user.orderId:${user}`) || '';
@@ -119,15 +119,15 @@ function mergeMessage(item) {
 function messageTitle(item) {
   if (item.direction === 'in') return item.payload?.title || item.eventType;
   const titles = {
-    'user.order.place': 'Pedido enviado',
-    'user.order.cancel': 'Cancelamento solicitado',
-    'user.order.status': 'Consulta de status',
-    'user.payment.retry': 'Nova tentativa de pagamento',
-    'user.delivery.eta': 'Consulta de entrega',
-    'user.catalog.check': 'Consulta de estoque',
-    'user.support.complaint': 'Mensagem para a operação'
+    'user.order.place': 'Order sent',
+    'user.order.cancel': 'Cancellation requested',
+    'user.order.status': 'Status check',
+    'user.payment.retry': 'New payment attempt',
+    'user.delivery.eta': 'Delivery check',
+    'user.catalog.check': 'Stock check',
+    'user.support.complaint': 'Message to operations'
   };
-  return titles[item.eventType] || 'Comando enviado';
+  return titles[item.eventType] || 'Command sent';
 }
 
 function messageCard(item) {
@@ -158,19 +158,19 @@ function messageCard(item) {
 
   if (item.payload?.orderId) {
     const order = document.createElement('span');
-    order.textContent = `pedido #${shortId(item.payload.orderId)}`;
+    order.textContent = `order #${shortId(item.payload.orderId)}`;
     meta.appendChild(order);
   }
 
   const source = document.createElement('span');
   source.textContent = item.direction === 'in'
-    ? `origem: ${item.source || 'serviço'}`
-    : 'publicado por você';
+    ? `source: ${item.source || 'service'}`
+    : 'published by you';
   meta.appendChild(source);
 
   if (item.direction === 'in' && item.user === '*') {
     const broadcast = document.createElement('span');
-    broadcast.textContent = 'comunicado geral';
+    broadcast.textContent = 'general announcement';
     meta.appendChild(broadcast);
   }
 
@@ -183,15 +183,15 @@ function messageCard(item) {
   const details = document.createElement('details');
   details.className = 'message-details';
   const summary = document.createElement('summary');
-  summary.textContent = 'Detalhes técnicos';
+  summary.textContent = 'Technical details';
   const pre = document.createElement('pre');
   pre.textContent = JSON.stringify(
     {
       id: item.id,
-      direcao: item.direction === 'in' ? 'recebida' : 'enviada',
-      evento: item.eventType,
-      origem: item.source,
-      usuario: item.user,
+      direction: item.direction === 'in' ? 'inbound' : 'outbound',
+      event: item.eventType,
+      source: item.source,
+      user: item.user,
       correlationId: item.correlationId,
       payload: item.payload
     },
@@ -226,14 +226,14 @@ function renderMessages() {
   els.inCount.textContent = String(inbound.length);
   els.outCount.textContent = String(outbound.length);
 
-  renderList(els.inbox, inbound, `Nenhuma mensagem recebida para ${state.user} ainda. Faça um pedido para iniciar a coreografia.`);
-  renderList(els.outbox, outbound, 'Nenhum comando enviado nesta sessão.');
+  renderList(els.inbox, inbound, `No messages received for ${state.user} yet. Place an order to start the workflow.`);
+  renderList(els.outbox, outbound, 'No commands sent in this session.');
 }
 
 async function loadHistory() {
   try {
     const response = await fetch(`api/messages?user=${encodeURIComponent(state.user)}`);
-    if (!response.ok) throw new Error('Falha ao carregar o histórico');
+    if (!response.ok) throw new Error('Failed to load message history');
     const data = await response.json();
     state.messages = data.items || [];
     renderMessages();
@@ -265,10 +265,10 @@ async function loadCatalog() {
       els.itemSelect.appendChild(option);
     }
     els.catalogHint.textContent = data.source === 'catalog-service'
-      ? `${state.catalog.length} itens carregados do catalog-service.`
-      : 'Catálogo local (catalog-service temporariamente indisponível).';
+      ? `${state.catalog.length} items loaded from catalog-service.`
+      : 'Local catalog (catalog-service temporarily unavailable).';
   } catch (err) {
-    els.catalogHint.textContent = 'Não foi possível carregar o catálogo.';
+    els.catalogHint.textContent = 'Could not load the catalog.';
     toast(err.message, 'error');
   }
 }
@@ -286,7 +286,7 @@ function selectedItem() {
 
 function requireOrderId() {
   if (!state.orderId) {
-    toast('Faça um pedido ou informe o código antes desta ação.', 'error');
+    toast('Place an order or enter the order code before this action.', 'error');
     els.orderId.focus();
     return false;
   }
@@ -303,13 +303,13 @@ async function sendAction(action, payload, button) {
       body: JSON.stringify({ user: state.user, action, payload })
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Falha ao enviar comando');
+    if (!response.ok) throw new Error(data.error || 'Failed to send command');
 
     mergeMessage(data.item);
     if (action === 'place-order' && data.item?.payload?.orderId) {
       setOrderId(data.item.payload.orderId);
     }
-    toast('Mensagem publicada na fila.', 'info');
+    toast('Message published to the queue.', 'info');
   } catch (err) {
     toast(err.message, 'error');
   } finally {
@@ -324,13 +324,13 @@ els.userForm.addEventListener('submit', (event) => {
 });
 
 els.newWindow.addEventListener('click', () => {
-  const next = NAMES.find((name) => name.toLowerCase() !== state.user.toLowerCase()) || 'Cliente';
+  const next = NAMES.find((name) => name.toLowerCase() !== state.user.toLowerCase()) || 'Customer';
   window.open(`${location.pathname}?user=${encodeURIComponent(next)}`, '_blank', 'noopener');
 });
 
 els.placeOrder.addEventListener('click', () => {
   const item = selectedItem();
-  if (!item) return toast('Selecione um item do catálogo.', 'error');
+  if (!item) return toast('Select a catalog item.', 'error');
   const quantity = Math.max(1, Math.min(99, Number(els.quantity.value) || 1));
   const orderId = crypto.randomUUID ? crypto.randomUUID() : `order-${Date.now()}`;
   sendAction('place-order', {
@@ -350,7 +350,7 @@ document.querySelectorAll('[data-action]').forEach((button) => {
 
     if (action === 'check-stock') {
       const item = selectedItem();
-      if (!item) return toast('Selecione um item do catálogo.', 'error');
+      if (!item) return toast('Select a catalog item.', 'error');
       sendAction('check-stock', { sku: item.sku, itemName: item.name }, button);
       return;
     }
@@ -358,7 +358,7 @@ document.querySelectorAll('[data-action]').forEach((button) => {
     if (action === 'complaint') {
       const message = els.complaint.value.trim();
       if (message.length < 3) {
-        toast('Descreva sua solicitação para a operação.', 'error');
+        toast('Describe your request to operations.', 'error');
         els.complaint.focus();
         return;
       }
@@ -371,8 +371,7 @@ document.querySelectorAll('[data-action]').forEach((button) => {
     if (!requireOrderId()) return;
 
     const payload = { orderId: state.orderId };
-    const send = sendAction(action, payload, button);
-    return send;
+    return sendAction(action, payload, button);
   });
 });
 
@@ -385,10 +384,10 @@ function connectStream() {
     try {
       const item = JSON.parse(event.data);
       if (mergeMessage(item) && item.direction === 'in') {
-        toast(item.payload?.title || 'Nova mensagem recebida', 'info');
+        toast(item.payload?.title || 'New message received', 'info');
       }
     } catch {
-      // ignora frames inválidos
+      // ignore invalid frames
     }
   });
   stream.addEventListener('error', () => setConnection(false));
@@ -406,7 +405,7 @@ async function checkHealth() {
 
 const queryUser = new URL(location.href).searchParams.get('user');
 const storedUser = sessionStorage.getItem('order-user.name');
-setUser(queryUser || storedUser || 'Ana');
+setUser(queryUser || storedUser || 'Alice');
 loadCatalog();
 connectStream();
 checkHealth();

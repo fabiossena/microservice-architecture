@@ -1,11 +1,11 @@
 # catalog-service
 
-Owner do catálogo e do estoque. Mantém reservas por pedido para permitir compensação (Saga por coreografia).
+Owner of the catalog and stock. It keeps per-order reservations to support compensation (choreographed saga).
 
-- Consome: `order.confirmed`, `order.cancelled`, `user.catalog.check`, `manager.catalog.restock`
-- Publica: `catalog.reserved`, `catalog.rejected`, `catalog.checked`, `catalog.restocked`, `catalog.released`
-- HTTP de apoio: `GET /health`, `GET /catalog`
-- Seed: 5 produtos com estoque inicial; recriado apenas quando a tabela está vazia.
+- Consumes: `order.confirmed`, `order.cancelled`, `user.catalog.check`, `manager.catalog.restock`
+- Publishes: `catalog.reserved`, `catalog.rejected`, `catalog.checked`, `catalog.restocked`, `catalog.released`
+- Support HTTP: `GET /health`, `GET /catalog`
+- Seed: five products with initial stock; recreated only when the table is empty.
 
-A reserva é atômica no SQLite e feita antes do pagamento, seguindo a ordem
-`catálogo -> pagamento -> entrega`. No cancelamento, `order.cancelled` devolve o estoque.
+The reservation is atomic in SQLite and happens before payment, following the order
+`catalog -> payment -> delivery`. On cancellation, `order.cancelled` returns the stock.

@@ -3,7 +3,7 @@
 x-service-env: &service-env
   RABBITMQ_URL: amqp://${RABBITMQ_USER:-orders}:${RABBITMQ_PASSWORD:-orders123}@rabbitmq:5672
   NODE_ENV: production
-  TZ: America/Sao_Paulo
+  TZ: UTC
 
 x-service: &service
   restart: unless-stopped

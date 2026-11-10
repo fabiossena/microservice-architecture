@@ -2,23 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { severityFor, targetUserFor, titleFor } from '../src/domain/notification.js';
 
-test('destina broadcast para todos', () => {
-  assert.equal(targetUserFor({ type: 'manager.broadcast', user: 'Ana' }), '*');
+test('routes broadcasts to everyone', () => {
+  assert.equal(targetUserFor({ type: 'manager.broadcast', user: 'Alice' }), '*');
 });
 
-test('usa targetUser quando presente', () => {
+test('uses targetUser when present', () => {
   assert.equal(
-    targetUserFor({ type: 'manager.reply', user: 'Operador', payload: { targetUser: 'Ana' } }),
-    'Ana'
+    targetUserFor({ type: 'manager.reply', user: 'Operator', payload: { targetUser: 'Alice' } }),
+    'Alice'
   );
 });
 
-test('fallback para usuário do envelope', () => {
-  assert.equal(targetUserFor({ type: 'order.created', user: 'Ana' }), 'Ana');
+test('falls back to the envelope user', () => {
+  assert.equal(targetUserFor({ type: 'order.created', user: 'Alice' }), 'Alice');
 });
 
-test('títulos e severidades', () => {
-  assert.equal(titleFor('payment.approved'), 'Pagamento aprovado');
+test('returns titles and severities', () => {
+  assert.equal(titleFor('payment.approved'), 'Payment approved');
   assert.equal(severityFor('payment.declined'), 'error');
-  assert.equal(titleFor('desconhecido'), 'Atualização do sistema');
+  assert.equal(titleFor('unknown'), 'System update');
 });

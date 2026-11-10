@@ -1,9 +1,9 @@
-{
+﻿{
   "name": "catalog-service",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Serviço de catálogo e reserva de estoque",
+  "description": "Catalog and stock reservation service",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

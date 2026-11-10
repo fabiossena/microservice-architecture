@@ -14,13 +14,13 @@ export async function readJson(req, limitBytes = 1_000_000) {
   const chunks = [];
   for await (const chunk of req) {
     size += chunk.length;
-    if (size > limitBytes) throw Object.assign(new Error('Payload muito grande'), { statusCode: 413 });
+    if (size > limitBytes) throw Object.assign(new Error('Payload too large'), { statusCode: 413 });
     chunks.push(chunk);
   }
   if (!chunks.length) return {};
   try {
     return JSON.parse(Buffer.concat(chunks).toString('utf8'));
   } catch {
-    throw Object.assign(new Error('JSON inválido'), { statusCode: 400 });
+    throw Object.assign(new Error('Invalid JSON'), { statusCode: 400 });
   }
 }

@@ -1,39 +1,39 @@
-﻿# Arquitetura
+﻿# Architecture
 
-## Contexto
+## Context
 
-O domínio é um grupo de restaurantes com serviços autônomos: pedidos, catálogo, pagamentos, entrega e notificações. As duas views (`order-user` e `order-manage-queue`) representam, respectivamente, o cliente e a operação.
+The domain is a restaurant group with autonomous services: orders, catalog, payments, delivery, and notifications. The two views (`order-user` and `order-manage-queue`) represent the customer and operations.
 
-O objetivo é demonstrar, de forma executável, os pontos centrais do artigo:
+The goal is to demonstrate, in a runnable form, the central points of the reference article:
 
-- serviços autônomos, com banco e deploy independentes;
-- comunicação assíncrona por APIs/mensageria/eventos;
-- coreografia de uma saga com compensações;
-- observabilidade mínima (health, filas, histórico de mensagens);
-- evolução possível de um monólito modular para extração de serviços.
+- autonomous services with independent databases and deployment;
+- asynchronous communication through APIs, messaging, and events;
+- choreographed saga with compensations;
+- minimal observability (health, queues, message history);
+- a possible evolution path from a modular monolith to extracted services.
 
-## Fronteiras dos serviços
+## Service boundaries
 
-| Serviço | Agregado / responsabilidade | Banco | Não faz |
+| Service | Aggregate / responsibility | Database | Does not |
 |---|---|---|---|
-| orders-service | Ciclo de vida do pedido | `orders.db` | Não cobra nem entrega |
-| catalog-service | Produto, preço, estoque e reserva | `catalog.db` | Não conhece pagamento |
-| payments-service | Cobrança e estorno simulados | `payments.db` | Não altera estoque |
-| delivery-service | Entregador, ETA, despacho | `deliveries.db` | Não aprova pagamento |
-| notify-service | Preferência e entrega de notificação | `notifications.db` | Não decide regra de negócio |
-| order-user | Interface e log de mensagens do cliente | `order-user.db` | Não acessa bancos de domínio |
-| order-manage-queue | Interface e log de mensagens da operação | `order-manage.db` | Não acessa bancos de domínio |
+| orders-service | Order lifecycle | `orders.db` | Charge or deliver |
+| catalog-service | Product, price, stock, and reservation | `catalog.db` | Know about payment |
+| payments-service | Simulated charge and refund | `payments.db` | Change stock |
+| delivery-service | Courier, ETA, dispatch | `deliveries.db` | Approve payment |
+| notify-service | Notification format and delivery | `notifications.db` | Decide business rules |
+| order-user | Customer interface and message log | `order-user.db` | Access domain databases |
+| order-manage-queue | Operations interface and message log | `order-manage.db` | Access domain databases |
 
-Nenhum serviço lê o banco de outro. A integração ocorre exclusivamente por HTTP de apoio (health/catálogo na view) ou pelo exchange `orders`.
+No service reads another service's database. Integration happens exclusively through support HTTP (health/catalog in the views) or the `orders` exchange.
 
-## Estilo de integração
+## Integration style
 
-- **Comandos** chegam de fora do domínio: `user.#` (cliente) e `manager.*` (operação). São intenções.
-- **Eventos de domínio** são fatos publicados pelos donos: `order.*`, `catalog.*`, `payment.*`, `delivery.*`.
-- **Notificações** são a tradução de eventos para o usuário: `notification.created`.
-- A routing key é o tipo do evento. O exchange é `topic` e permite evolução com wildcards (`order.*`).
+- **Commands** arrive from outside the domain: `user.#` (customer) and `manager.*` (operations). They are intents.
+- **Domain events** are facts published by their owners: `order.*`, `catalog.*`, `payment.*`, `delivery.*`.
+- **Notifications** translate events for the user: `notification.created`.
+- The routing key is the event type. The exchange is a `topic` exchange, enabling wildcard evolution (`order.*`).
 
-## Fluxo feliz
+## Happy path
 
 ```mermaid
 sequenceDiagram
@@ -50,34 +50,34 @@ sequenceDiagram
     O-->>N: order.created
     N-->>U: notification.created
     N-->>M: order.created
-    M->>O: manager.order.approve (ou auto após 12s)
+    M->>O: manager.order.approve (or auto after 12s)
     O-->>C: order.confirmed
     C-->>P: catalog.reserved
     P-->>D: payment.approved
     D-->>N: delivery.assigned
     D-->>N: delivery.dispatched (5s)
     D-->>N: delivery.delivered (15s)
-    N-->>U: notification.created (cada fato)
+    N-->>U: notification.created (each fact)
 ```
 
-Ordem de consistência escolhida:
+Chosen consistency order:
 
-1. O pedido nasce pendente.
-2. Aprovação humana ou automática publica `order.confirmed`.
-3. Catálogo reserva o estoque (`catalog.reserved`). Se faltar, `catalog.rejected` encerra o fluxo sem cobrança.
-4. Pagamento só é processado após a reserva (`catalog.reserved -> payment.approved`).
-5. Entrega só é criada após o pagamento (`payment.approved -> delivery.assigned`).
-6. Notificação é produzida para cada fato relevante.
+1. The order starts pending.
+2. Human or automatic approval publishes `order.confirmed`.
+3. The catalog reserves stock (`catalog.reserved`). If stock is missing, `catalog.rejected` ends the flow without charging.
+4. Payment is processed only after the reservation (`catalog.reserved -> payment.approved`).
+5. Delivery is created only after payment (`payment.approved -> delivery.assigned`).
+6. A notification is produced for every relevant fact.
 
-Essa sequência evita cobrar um pedido sem estoque e evita entregar sem pagamento. É uma saga por coreografia; não existe transação distribuída.
+This sequence avoids charging for an order without stock and avoids delivering without payment. It is a choreographed saga; there is no distributed transaction.
 
-## Compensações
+## Compensations
 
-### Cancelamento
+### Cancellation
 
 ```mermaid
 sequenceDiagram
-    participant U as order-user / operação
+    participant U as order-user / operations
     participant O as orders-service
     participant C as catalog-service
     participant P as payments-service
@@ -87,18 +87,18 @@ sequenceDiagram
     O-->>C: order.cancelled
     O-->>P: order.cancelled
     O-->>D: order.cancelled
-    C-->>C: devolve estoque (catalog.released)
-    P-->>P: estorna se aprovado (payment.refunded)
-    D-->>D: cancela entrega (delivery.cancelled)
+    C-->>C: release stock (catalog.released)
+    P-->>P: refund if approved (payment.refunded)
+    D-->>D: cancel delivery (delivery.cancelled)
 ```
 
-Se o pedido já foi entregue, o cancelamento é recusado com `order.cancel_rejected`.
+If the order was already delivered, cancellation is rejected with `order.cancel_rejected`.
 
-### Reposição de estoque
+### Stock restock
 
-A operação publica `manager.catalog.restock`; o catálogo incrementa o saldo e publica `catalog.restocked` como broadcast (`user = "*"`).
+Operations publishes `manager.catalog.restock`; the catalog increments the balance and publishes `catalog.restocked` as a broadcast (`user = "*"`).
 
-### Resposta da operação
+### Operations reply
 
 ```mermaid
 sequenceDiagram
@@ -110,16 +110,16 @@ sequenceDiagram
     N-->>U: notification.created
 ```
 
-Respostas de comando (aprovar, cancelar etc.) não são notificadas diretamente pelo notify; o serviço dono publica o fato resultante e o notify traduz. Isso mantém a regra de negócio no serviço correto.
+Command replies (approve, cancel, etc.) are not notified directly by notify-service; the owning service publishes the resulting fact, and notify-service translates it. This keeps business rules in the correct service.
 
-## Dados
+## Data
 
-- SQLite em modo WAL, um arquivo por serviço, volumes Docker nomeados.
-- Tabelas de domínio + `processed_events` para idempotência básica.
-- As views armazenam um log imutável de mensagens (`messages`) com direção, categoria, tipo, origem, usuário, payload, `occurred_at` e `recorded_at`.
-- Notificações usam o `event_id` de origem como chave primária, evitando duplicidade.
+- SQLite in WAL mode, one file per service, named Docker volumes.
+- Domain tables + `processed_events` for basic idempotency.
+- The views store an immutable message log (`messages`) with direction, category, type, source, user, payload, `occurred_at`, and `recorded_at`.
+- Notifications use the source `event_id` as the primary key, preventing duplicates.
 
-### Esquema resumido
+### Condensed schema
 
 ```
 orders(id, user, status, total, items, reason, created_at, updated_at)
@@ -128,58 +128,58 @@ reservations(order_id, user, items, created_at)
 payments(id, order_id, user, amount, status, method, reason, created_at, updated_at)
 deliveries(id, order_id, user, status, courier, eta_minutes, created_at, updated_at)
 notifications(id, user, source, title, message, severity, original_type, payload, occurred_at, created_at)
-messages(...)  -- uma cópia em cada view
+messages(...)  -- one copy per view
 ```
 
 ## Views
 
 ### order-user
 
-- Identidade por aba via `?user=Nome` + `sessionStorage` (não usa `localStorage`, para permitir abas com usuários diferentes).
-- SSE (`/api/stream`) entrega eventos em tempo real.
-- A lista de entrada mostra apenas o usuário da aba e broadcasts (`*`).
-- A lista de saída mostra os comandos publicados, com a routing key.
-- O catálogo é consultado via HTTP no `catalog-service`; há fallback local para a UI não quebrar.
+- Identity per tab through `?user=Name` + `sessionStorage` (not `localStorage`, allowing tabs with different users).
+- SSE (`/api/stream`) delivers events in real time.
+- The inbound list shows only the tab's user and broadcasts (`*`).
+- The outbound list shows published commands with their routing keys.
+- The catalog is fetched over HTTP from `catalog-service`; there is a local fallback so the UI does not break.
 
 ### order-manage-queue
 
-- Consome `user.#` para a aba "Mensagens dos usuários" e o restante dos eventos de domínio para "Eventos do sistema".
-- "Usar este contexto" preenche usuário e pedido a partir da mensagem selecionada.
-- As respostas passam pelo notify-service, garantindo o mesmo caminho de entrega do cliente.
-- Reposição de estoque e comunicado geral são broadcasts.
+- Consumes `user.#` for the "Customer messages" tab and the remaining domain events for "System events".
+- "Use this context" fills the user and order from the selected message.
+- Replies go through notify-service, ensuring the same delivery path as the customer.
+- Restock and general announcements are broadcasts.
 
 ## API Gateway
 
-O `api-gateway` é deliberadamente simples:
+The `api-gateway` is deliberately simple:
 
-- dashboard de saúde e filas;
-- proxy HTTP para `/user/` e `/manage/`, preservando SSE;
-- agregação de health por serviço.
+- health and queue dashboard;
+- HTTP proxy for `/user/` and `/manage/`, preserving SSE;
+- per-service health aggregation.
 
-Não é um API Gateway de produção: não tem autenticação, rate limit, TLS, circuit breaker, cache ou roteamento declarativo.
+It is not a production API Gateway: it has no authentication, rate limiting, TLS, circuit breaker, cache, or declarative routing.
 
-## Falhas e resiliência
+## Failure and resilience
 
-O que já existe:
+What exists today:
 
-- reconexão automática do cliente AMQP;
-- filas e mensagens duráveis;
-- idempotência por `event_id`;
-- compensações;
-- health checks e `restart: unless-stopped`;
-- timeouts curtos nas chamadas HTTP das views;
-- SSE com reconexão automática do navegador.
+- automatic AMQP client reconnection;
+- durable queues and messages;
+- idempotency by `event_id`;
+- compensations;
+- health checks and `restart: unless-stopped`;
+- short HTTP timeouts in the views;
+- SSE with automatic browser reconnection.
 
-O que falta para produção:
+What is missing for production:
 
-- outbox transacional;
-- DLQ e retry com backoff;
-- lock/serialização por agregado;
-- tracing distribuído;
-- schema registry e versionamento;
-- autenticação e autorização;
-- testes de contrato e caos.
+- transactional outbox;
+- DLQ and retry with backoff;
+- per-aggregate locking/serialization;
+- distributed tracing;
+- schema registry and versioning;
+- authentication and authorization;
+- contract and chaos tests.
 
-## Por que não há transação distribuída
+## Why there is no distributed transaction
 
-Sagas trocam atomicidade por consistência eventual. Cada serviço registra seu estado e publica fatos. Se um passo falha, um evento compensatório é emitido. O sistema é consistente no final, não instantaneamente. Esse trade-off é o custo operacional citado no artigo e é exatamente o que este laboratório procura tornar visível.
+Sagas trade atomicity for eventual consistency. Each service records its state and publishes facts. If a step fails, a compensating event is emitted. The system is eventually consistent, not immediately consistent. That trade-off is the operational cost mentioned in the article and is exactly what this lab makes visible.

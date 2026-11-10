@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { availability, validateItems, formatMissing } from '../src/domain/catalog.js';
 
-test('detecta estoque suficiente', () => {
+test('detects sufficient stock', () => {
   const result = availability(
     [{ sku: 'pizza', quantity: 2 }],
     { pizza: 10 }
@@ -11,7 +11,7 @@ test('detecta estoque suficiente', () => {
   assert.deepEqual(result.missing, []);
 });
 
-test('lista itens sem estoque', () => {
+test('lists items without enough stock', () => {
   const result = availability(
     [{ sku: 'pizza', name: 'Pizza', quantity: 3 }],
     { pizza: 1 }
@@ -21,7 +21,7 @@ test('lista itens sem estoque', () => {
   assert.match(formatMissing(result.missing), /Pizza/);
 });
 
-test('valida itens de reserva', () => {
-  assert.throws(() => validateItems([]), /sem itens/);
-  assert.throws(() => validateItems([{ sku: 'x', quantity: 0 }]), /Item inválido/);
+test('validates reservation items', () => {
+  assert.throws(() => validateItems([]), /no items/);
+  assert.throws(() => validateItems([{ sku: 'x', quantity: 0 }]), /Invalid item/);
 });

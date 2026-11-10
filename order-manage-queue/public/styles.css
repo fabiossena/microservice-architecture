@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color-scheme: dark;
   --bg: #0b1118;
   --bg-elevated: #111a24;
@@ -315,7 +315,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   .queue-header { align-items: flex-start; flex-direction: column; }
 }
 
-/* ---------- Painel da operação ---------- */
+/* ---------- Operations center ---------- */
 .brand-mark.admin {
   background: linear-gradient(135deg, #5cc8ff, #3d7dff);
   color: #07121d;

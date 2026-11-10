@@ -56,13 +56,13 @@ heartbeat.unref?.();
 broker.start().catch((err) => logger.error(`[order-manage-queue] ${err.message}`));
 
 async function shutdown(signal) {
-  logger.info(`[order-manage-queue] recebido ${signal}, encerrando...`);
+  logger.info(`[order-manage-queue] received ${signal}, shutting down...`);
   clearInterval(heartbeat);
   for (const client of sseClients) {
     try {
       client.end();
     } catch {
-      // ignora
+      // ignore
     }
   }
   server.close();

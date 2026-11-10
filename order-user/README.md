@@ -1,12 +1,12 @@
 ﻿# order-user
 
-Portal do cliente (view). Cada aba/janela pode representar um usuário diferente (via `?user=Nome` ou pelo formulário).
+Customer portal (view). Each tab/window can represent a different user (through `?user=Name` or the form).
 
-- Consome: `notification.created` (notificações produzidas pelo notify-service)
-- Publica ações de cliente: `user.order.place`, `user.order.cancel`, `user.order.status`, `user.payment.retry`, `user.delivery.eta`, `user.catalog.check`, `user.support.complaint`
+- Consumes: `notification.created` (notifications produced by notify-service)
+- Publishes customer actions: `user.order.place`, `user.order.cancel`, `user.order.status`, `user.payment.retry`, `user.delivery.eta`, `user.catalog.check`, `user.support.complaint`
 - HTTP: `GET /health`, `GET /api/messages?user=...`, `GET /api/catalog`, `POST /api/actions`, `GET /api/stream` (SSE)
-- Banco: SQLite (`order-user.db`) com as filas de entrada e saída, incluindo data/hora.
+- Database: SQLite (`order-user.db`) with inbound and outbound queues, including timestamps.
 
-A tela mostra as mensagens recebidas em tempo real (filtradas pelo usuário da aba ou broadcast) e o log das mensagens publicadas, com os detalhes técnicos de cada envelope.
+The screen shows messages received in real time (filtered by the tab's user or broadcasts) and the log of published messages with technical details for each envelope.
 
-Para simular dois clientes, abra `http://localhost:8071/?user=Ana` e `http://localhost:8071/?user=Bruno` em janelas diferentes.
+To simulate two customers, open `http://localhost:8071/?user=Alice` and `http://localhost:8071/?user=Bob` in different windows.

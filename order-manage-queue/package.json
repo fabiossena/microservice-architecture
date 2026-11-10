@@ -1,9 +1,9 @@
-{
+﻿{
   "name": "order-manage-queue",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Painel da operação (view) do laboratório de microsserviços",
+  "description": "Operations center (view) for the microservices lab",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

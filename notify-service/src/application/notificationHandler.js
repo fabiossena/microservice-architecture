@@ -4,13 +4,13 @@ export function createNotificationHandler({ db, broker, logger }) {
   return async (event) => {
     const user = targetUserFor(event);
     if (!user) {
-      logger.warn(`[notify] evento ${event.type} sem usuário de destino; ignorado`);
+      logger.warn(`[notify] event ${event.type} has no target user; ignored`);
       return;
     }
 
     const title = titleFor(event.type);
     const severity = severityFor(event.type);
-    const message = event.message || `Evento ${event.type} processado.`;
+    const message = event.message || `Event ${event.type} processed.`;
 
     const inserted = db.insert({
       id: event.id,
@@ -25,7 +25,7 @@ export function createNotificationHandler({ db, broker, logger }) {
     });
 
     if (!inserted) {
-      logger.info(`[notify] notificação duplicada ignorada: ${event.id}`);
+      logger.info(`[notify] duplicate notification ignored: ${event.id}`);
       return;
     }
 

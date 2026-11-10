@@ -1,93 +1,94 @@
 ﻿# Orders Lab · Microservices Architecture
 
-Laboratório executável de **arquitetura de microsserviços orientada a eventos**, inspirado no artigo de referência do repositório. O domínio é um grupo de restaurantes: o cliente faz pedidos, a operação acompanha e responde, o catálogo reserva estoque, o pagamento é simulado e a entrega é orquestrada por eventos.
+A runnable **event-driven microservices architecture** laboratory inspired by the reference article in this repository. The domain is a restaurant group: customers place orders, operations monitors and replies, the catalog reserves stock, payment is simulated, and delivery is driven by events.
 
-Tudo sobe localmente com **Docker Compose + RabbitMQ + SQLite**. Cada microsserviço é um projeto independente (Node.js 24, ESM), com API HTTP de apoio, banco próprio e comunicação assíncrona por filas.
+Everything runs locally with **Docker Compose + RabbitMQ + SQLite**. Each microservice is an independent project (Node.js 24, ESM) with its own database and support HTTP API, communicating asynchronously through queues.
 
-> Repositório: <https://github.com/fabiossena/microservice-architecture>
+> Repository: <https://github.com/fabiossena/microservice-architecture>
 
 ---
 
-## O que está rodando
+## What is running
 
-| Componente | Papel | Porta |
+| Component | Responsibility | Port |
 |---|---|---|
-| `order-user` | Portal do cliente. Abas independentes por usuário, ações de pedido, entrada/saída de mensagens com data/hora. | 8081 |
-| `order-manage-queue` | Central da operação. Recebe ações dos clientes, permite aprovar/cancelar/reembolsar/despachar/repor e responder. | 8082 |
-| `orders-service` | Dono do ciclo de vida do pedido. | 8091 |
-| `payments-service` | Adquirente simulada, com limite de aprovação. | 8092 |
-| `delivery-service` | Designação de entregador, despacho e conclusão. | 8093 |
-| `catalog-service` | Catálogo, estoque e reservas por pedido. | 8094 |
-| `notify-service` | Transforma eventos de domínio em notificações por usuário. | 8095 |
-| `api-gateway` | Dashboard, proxy para as views e health agregado. | 8080 |
-| RabbitMQ | Exchange `orders` (topic), filas duráveis e management UI. | 5672 / 15672 |
+| `order-user` | Customer portal. Independent tabs per user, order actions, inbound/outbound messages with timestamps. | 8081 |
+| `order-manage-queue` | Operations center. Receives customer actions, supports approve/cancel/refund/dispatch/restock and replies. | 8082 |
+| `orders-service` | Owner of the order lifecycle. | 8091 |
+| `payments-service` | Simulated payment acquirer with an approval limit. | 8092 |
+| `delivery-service` | Courier assignment, dispatch, and delivery completion. | 8093 |
+| `catalog-service` | Catalog, stock, and per-order reservations. | 8094 |
+| `notify-service` | Turns domain events into per-user notifications. | 8095 |
+| `api-gateway` | Dashboard, proxy for the views, and aggregated health. | 8080 |
+| RabbitMQ | `orders` topic exchange, durable queues, and management UI. | 5672 / 15672 |
 
-**Atalhos**
+**Shortcuts**
 
 - Dashboard: <http://localhost:8070>
-- Portal do cliente: <http://localhost:8070/user/> ou <http://localhost:8071>
-- Central da operação: <http://localhost:8070/manage/> ou <http://localhost:8072>
+- Customer portal: <http://localhost:8070/user/> or <http://localhost:8071>
+- Operations center: <http://localhost:8070/manage/> or <http://localhost:8072>
 - RabbitMQ Management: <http://localhost:15672> (`orders` / `orders123`)
 
-As portas externas `8070–8072` foram escolhidas para evitar conflito com outros serviços locais que costumam ocupar `8080–8082`. As portas internas dos containers permanecem `8080`, `8081` e `8082`.
+External ports `8070–8072` were chosen to avoid conflicts with other local services that commonly occupy `8080–8082`. The internal container ports remain `8080`, `8081`, and `8082`.
 
 ---
 
-## Telas
+## Screens
 
-| Portal do cliente | Central da operação |
+| Customer portal | Operations center |
 |---|---|
-| ![Portal do cliente](docs/images/order-user.png) | ![Central da operação](docs/images/order-manage.png) |
+| ![Customer portal](docs/images/order-user.png) | ![Operations center](docs/images/order-manage.png) |
 
-![Dashboard do API Gateway](docs/images/dashboard.png)
-
+![API Gateway dashboard](docs/images/dashboard.png)
 
 ---
 
-## Começando
+## Getting started
 
-Pré-requisito: Docker Desktop em execução (Docker Compose v2+).
+Prerequisite: Docker Desktop running (Docker Compose v2+).
 
 ```powershell
-# na raiz do projeto
+# from the project root
 Copy-Item .env.example .env
 docker compose up -d --build
 docker compose ps
 ```
 
-A primeira subida baixa as imagens e instala as dependências de cada serviço. Quando todos estiverem `healthy`:
+The first start pulls images and installs dependencies for each service. Once all containers are `healthy`:
 
-1. Abra o portal do cliente com **Ana** em uma janela: <http://localhost:8071/?user=Ana>
-2. Abra outra janela com **Bruno**: <http://localhost:8071/?user=Bruno>
-3. Abra a central da operação: <http://localhost:8072>
-4. Em cada janela do cliente, faça um pedido.
-5. Na operação, clique em **Usar este contexto** em uma mensagem de cliente e use os botões de resposta.
-6. Observe as notificações chegando em cada aba, com mensagem e data/hora.
-7. Inspecione filas e mensagens em <http://localhost:15672>.
+1. Open the customer portal as **Alice**: <http://localhost:8071/?user=Alice>
+2. Open another window as **Bob**: <http://localhost:8071/?user=Bob>
+3. Open the operations center: <http://localhost:8072>
+4. Place an order in each customer window.
+5. In operations, click **Use this context** on a customer message and use the reply buttons.
+6. Watch notifications arrive in each tab with message text and timestamps.
+7. Inspect queues and messages at <http://localhost:15672>.
 
-O pedido é aprovado automaticamente após ~12s (`AUTO_APPROVE_MS`) para a simulação não travar; a operação pode aprovar/cancelar antes disso.
+Orders are approved automatically after ~12s (`AUTO_APPROVE_MS`) so the simulation does not stall; operations can approve or cancel earlier.
 
-Para acompanhar os logs:
+Follow the logs:
 
 ```powershell
 docker compose logs -f orders-service catalog-service payments-service delivery-service notify-service
 ```
 
-Para derrubar (mantendo dados) ou resetar tudo:
+Stop the stack (keeping data) or reset everything:
 
 ```powershell
 docker compose down
-docker compose down -v   # remove também os volumes SQLite e do RabbitMQ
+docker compose down -v   # also removes SQLite and RabbitMQ volumes
 ```
+
+All monetary values are displayed in **USD** (`$`) using `en-US` formatting.
 
 ---
 
-## Como o fluxo funciona
+## How the flow works
 
 ```mermaid
 flowchart LR
-    U[order-user<br/>portal do cliente] -->|user.#| EX((exchange orders<br/>topic))
-    M[order-manage-queue<br/>operação] -->|manager.*| EX
+    U[order-user<br/>customer portal] -->|user.#| EX((orders exchange<br/>topic))
+    M[order-manage-queue<br/>operations] -->|manager.*| EX
     EX --> O[orders-service]
     EX --> C[catalog-service]
     EX --> P[payments-service]
@@ -102,7 +103,7 @@ flowchart LR
     EX -->|user.# / order.* / payment.* ...| M
 ```
 
-### Coreografia principal
+### Main choreography
 
 ```mermaid
 sequenceDiagram
@@ -115,7 +116,7 @@ sequenceDiagram
 
     U->>O: user.order.place
     O-->>U: order.created (via notify)
-    Note over O: aprovação manual ou automática
+    Note over O: manual or automatic approval
     O->>C: order.confirmed
     C->>P: catalog.reserved
     P->>D: payment.approved
@@ -123,31 +124,31 @@ sequenceDiagram
     N-->>U: notification.created
 ```
 
-- **Cliente** publica comandos/ações (`user.#`) e exibe o que chega como `notification.created`.
-- **Operação** recebe todas as ações `user.#` e os eventos de domínio, e publica comandos `manager.*`.
-- **Serviços de domínio** reagem apenas aos eventos dos quais dependem e publicam fatos (`order.*`, `catalog.*`, `payment.*`, `delivery.*`).
-- **notify-service** é o tradutor de eventos para notificações, mantendo as views desacopladas das regras de negócio.
+- **Customer** publishes commands/actions (`user.#`) and displays inbound `notification.created` messages.
+- **Operations** receives all `user.#` actions and domain events, and publishes `manager.*` commands.
+- **Domain services** react only to the events they depend on and publish facts (`order.*`, `catalog.*`, `payment.*`, `delivery.*`).
+- **notify-service** translates events into notifications, keeping the views decoupled from business rules.
 
-O catálogo reserva o estoque **antes** do pagamento. O pagamento aprova **antes** da entrega. Cancelamentos disparam compensações: `catalog.released`, `payment.refunded` e `delivery.cancelled`.
+The catalog reserves stock **before** payment. Payment approves **before** delivery. Cancellations trigger compensations: `catalog.released`, `payment.refunded`, and `delivery.cancelled`.
 
-Detalhes completos em [`docs/architecture.md`](docs/architecture.md) e [`docs/event-catalog.md`](docs/event-catalog.md).
+Full details in [`docs/architecture.md`](docs/architecture.md) and [`docs/event-catalog.md`](docs/event-catalog.md).
 
 ---
 
-## Estrutura do repositório
+## Repository structure
 
 ```
 microservice-architecture/
 ├── docker-compose.yml
 ├── .env.example
-├── api-gateway/                 # dashboard + proxy reverso das views
-├── order-user/                  # view do cliente (SSE + SQLite)
-├── order-manage-queue/          # view da operação (SSE + SQLite)
-├── orders-service/              # agregado Order
-├── catalog-service/             # catálogo e reservas
-├── payments-service/            # pagamento simulado
-├── delivery-service/            # entrega simulada
-├── notify-service/              # notificações
+├── api-gateway/                 # dashboard + reverse proxy for the views
+├── order-user/                  # customer view (SSE + SQLite)
+├── order-manage-queue/          # operations view (SSE + SQLite)
+├── orders-service/              # Order aggregate
+├── catalog-service/             # catalog and reservations
+├── payments-service/            # simulated payment
+├── delivery-service/            # simulated delivery
+├── notify-service/              # notifications
 ├── docs/
 │   ├── architecture.md
 │   ├── event-catalog.md
@@ -155,19 +156,19 @@ microservice-architecture/
 │   └── images/
 ├── scripts/
 │   └── smoke-test.mjs
-├── platform-infra/              # notas de infraestrutura local/produção
+├── platform-infra/              # local/production infrastructure notes
 └── .github/workflows/ci.yml
 ```
 
-Cada serviço segue uma separação simples inspirada em Clean Architecture:
+Each service follows a simple separation inspired by Clean Architecture:
 
 ```
-<servico>/
+<service>/
 ├── src/
-│   ├── api/             # HTTP de apoio (health, consultas)
-│   ├── application/     # casos de uso / handlers de eventos
-│   ├── domain/          # regras puras
-│   ├── infrastructure/  # broker AMQP e SQLite
+│   ├── api/             # support HTTP (health, queries)
+│   ├── application/     # use cases / event handlers
+│   ├── domain/          # pure business rules
+│   ├── infrastructure/  # AMQP broker and SQLite
 │   ├── config.js
 │   └── index.js
 ├── test/
@@ -176,13 +177,13 @@ Cada serviço segue uma separação simples inspirada em Clean Architecture:
 └── README.md
 ```
 
-As views mantêm a camada de apresentação em `public/` e a integração com broker/banco em `src/`.
+The views keep presentation under `public/` and broker/database integration under `src/`.
 
 ---
 
-## Modelo de mensagem
+## Message model
 
-Todos os eventos usam o mesmo envelope:
+Every event uses the same envelope:
 
 ```json
 {
@@ -190,24 +191,24 @@ Todos os eventos usam o mesmo envelope:
   "type": "order.confirmed",
   "source": "orders-service",
   "occurredAt": "2026-11-10T14:32:00.000Z",
-  "correlationId": "order-id-ou-uuid",
-  "user": "Ana",
-  "message": "Pedido #a1b2c3d4 aprovado. Valor: R$ 91,80.",
+  "correlationId": "order-id-or-uuid",
+  "user": "Alice",
+  "message": "Order #a1b2c3d4 approved. Total: $91.80.",
   "payload": { "orderId": "a1b2c3d4-...", "total": 91.8 }
 }
 ```
 
-- A **routing key** é o próprio `type`.
-- Mensagens são persistentes e as filas são duráveis.
-- Os consumidores usam `ack` manual e `prefetch=10`.
-- Cada serviço registra `event_id` processado em SQLite para idempotência básica.
-- As views gravam todo o tráfego de entrada/saída em SQLite, com `occurred_at` e `recorded_at`.
+- The **routing key** is the `type` itself.
+- Messages are persistent and queues are durable.
+- Consumers use manual `ack` and `prefetch=10`.
+- Each service stores processed `event_id` values in SQLite for basic idempotency.
+- The views persist all inbound/outbound traffic in SQLite with `occurred_at` and `recorded_at`.
 
-### Topologia RabbitMQ
+### RabbitMQ topology
 
-Exchange: `orders` (topic, durável).
+Exchange: `orders` (topic, durable).
 
-| Fila | Principais bindings |
+| Queue | Main bindings |
 |---|---|
 | `orders-service.events` | `user.order.place`, `user.order.cancel`, `user.order.status`, `manager.order.approve`, `manager.order.cancel`, `catalog.rejected`, `payment.approved`, `payment.declined`, `delivery.delivered` |
 | `catalog-service.events` | `order.confirmed`, `order.cancelled`, `user.catalog.check`, `manager.catalog.restock` |
@@ -219,47 +220,47 @@ Exchange: `orders` (topic, durável).
 
 ---
 
-## Decisões de design
+## Design decisions
 
-- **Coreografia em vez de orquestrador central.** Cada serviço conhece apenas os eventos que consome e publica. O acoplamento é pelo contrato do evento.
-- **Um banco por serviço.** SQLite local (um arquivo por serviço) simula a autonomia de dados; nenhum serviço lê o banco do outro. Em produção, troque por PostgreSQL por serviço.
-- **Views desacopladas.** O cliente não fala diretamente com catálogo/pagamento. Ele publica ações e recebe notificações. A operação publica comandos que são traduzidos em eventos de domínio.
-- **Saga por compensação.** Cancelamento libera estoque, estorna pagamento e cancela entrega.
-- **Notificação como serviço.** O notify-service centraliza o formato de mensagem ao usuário e permite adicionar e-mail/push/WebSocket sem tocar nos demais serviços.
-- **SSE + SQLite nas views.** Atualização em tempo real sem dependências extras; o histórico permanece após recarregar a página.
-- **Aprovação automática configurável.** Mantém o laboratório fluindo mesmo sem interação da operação.
+- **Choreography instead of a central orchestrator.** Each service knows only the events it consumes and publishes. Coupling happens through the event contract.
+- **One database per service.** Local SQLite (one file per service) simulates data autonomy; no service reads another service's database. In production, replace it with PostgreSQL per service.
+- **Decoupled views.** The customer does not call catalog/payment directly. It publishes actions and receives notifications. Operations publishes commands that are translated into domain events.
+- **Saga through compensation.** Cancellation releases stock, refunds payment, and cancels delivery.
+- **Notification as a service.** notify-service centralizes the user-facing message format and allows adding email/push/WebSocket without touching the other services.
+- **SSE + SQLite in the views.** Real-time updates with no extra dependencies; history survives a page reload.
+- **Configurable automatic approval.** Keeps the lab flowing even without operator interaction.
 
-### Limitações conscientes (e próximos passos)
+### Known limitations (and next steps)
 
-Este é um laboratório executável, não um sistema de produção. Para evoluir:
+This is a runnable lab, not a production system. To evolve it:
 
-1. **Transactional outbox** nos serviços para publicar eventos sem perder dados em falhas entre commit e publish.
-2. **Dead-letter queues + retry com backoff**; hoje mensagens com erro são descartadas (`nack` sem requeue).
-3. **Idempotência por chave de negócio** além do `event_id` (ex.: `order_id` único nas reservas).
-4. **Autenticação/autorização** no gateway e nas APIs; hoje o ambiente é aberto.
-5. **Contratos versionados** (JSON Schema/Avro/CloudEvents) e testes de contrato.
-6. **Observabilidade distribuída**: OpenTelemetry, Jaeger, Prometheus, Grafana, logs correlacionados por `correlationId`.
-7. **PostgreSQL + migrations** e transações reais por serviço.
-8. **Kubernetes/Helm**, secrets, TLS, HPA e políticas de resiliência.
-9. **Testcontainers** para testes de integração do fluxo completo.
-10. **UI de produção** com autenticação, perfil, histórico paginado e i18n.
+1. **Transactional outbox** in services to publish events without losing data between commit and publish.
+2. **Dead-letter queues + retry with backoff**; today messages that fail are dropped (`nack` without requeue).
+3. **Idempotency by business key** in addition to `event_id` (for example, unique `order_id` on reservations).
+4. **Authentication/authorization** at the gateway and APIs; the environment is currently open.
+5. **Versioned contracts** (JSON Schema/Avro/CloudEvents) and contract tests.
+6. **Distributed observability**: OpenTelemetry, Jaeger, Prometheus, Grafana, and logs correlated by `correlationId`.
+7. **PostgreSQL + migrations** and real transactions per service.
+8. **Kubernetes/Helm**, secrets, TLS, HPA, and resilience policies.
+9. **Testcontainers** for full-flow integration tests.
+10. **Production UI** with authentication, profiles, paginated history, and i18n.
 
 ---
 
-## Desenvolvimento e testes
+## Development and tests
 
-Cada serviço é um projeto Node.js independente:
+Each service is an independent Node.js project:
 
 ```powershell
 cd orders-service
 npm install
 npm test
-npm start   # requer RabbitMQ local em localhost:5672
+npm start   # requires RabbitMQ locally on localhost:5672
 ```
 
-> Node.js 24+ é necessário por causa do módulo nativo `node:sqlite` (sem dependência nativa externa).
+> Node.js 24+ is required because of the built-in `node:sqlite` module (no external native dependency).
 
-Rodar todos os testes de domínio:
+Run all domain tests:
 
 ```powershell
 foreach ($svc in 'orders-service','catalog-service','payments-service','delivery-service','notify-service') {
@@ -269,34 +270,34 @@ foreach ($svc in 'orders-service','catalog-service','payments-service','delivery
 }
 ```
 
-Os testes cobrem regras puras (cálculo de total, estoque, decisão de pagamento, ETA, roteamento de notificações). O fluxo distribuído é validado manualmente pela UI e pode ser automatizado com Testcontainers.
+The tests cover pure rules (total calculation, stock, payment decision, ETA, notification routing). The distributed flow is validated through the UI and can be automated with Testcontainers.
 
-### Smoke test do fluxo completo
+### Full-flow smoke test
 
-Com o Compose no ar, execute:
+With the Compose stack running:
 
 ```powershell
 node scripts/smoke-test.mjs
 ```
 
-O script valida health agregado, cria um pedido, aprova pela operação, aguarda a coreografia até `delivered`, confere os estados em orders/payments/delivery, envia uma resposta da operação e verifica a chegada na caixa do cliente. Requer Node.js 18+ (usa `fetch` nativo) e as portas padrão do laboratório; é possível sobrescrever com `GATEWAY_URL`, `ORDERS_URL`, `PAYMENTS_URL`, `DELIVERY_URL` e `CATALOG_URL`.
+The script validates aggregated health, creates an order, approves it through operations, waits for the workflow to reach `delivered`, checks the state in orders/payments/delivery, sends an operations reply, and verifies it reaches the customer inbox. It requires Node.js 18+ (native `fetch`) and the default lab ports; override them with `GATEWAY_URL`, `ORDERS_URL`, `PAYMENTS_URL`, `DELIVERY_URL`, and `CATALOG_URL`.
 
 ---
 
-## Publicação no GitHub
+## Publishing to GitHub
 
-O repositório remoto esperado é `https://github.com/fabiossena/microservice-architecture`.
+The expected remote is `https://github.com/fabiossena/microservice-architecture`.
 
 ```powershell
 git init
 git add .
-git commit -m "feat: laboratório de microsserviços orientado a eventos"
+git commit -m "feat: event-driven microservices lab with RabbitMQ, SQLite, and real-time UIs"
 git branch -M main
 git remote add origin https://github.com/fabiossena/microservice-architecture.git
 git push -u origin main
 ```
 
-Se o `gh` estiver autenticado, também é possível criar o repositório com:
+If `gh` is authenticated, you can also create the repository with:
 
 ```powershell
 gh repo create fabiossena/microservice-architecture --public --source . --remote origin --push
@@ -304,6 +305,6 @@ gh repo create fabiossena/microservice-architecture --public --source . --remote
 
 ---
 
-## Licença
+## License
 
-MIT. Consulte [LICENSE](LICENSE). Projeto de estudo: sinta-se livre para adaptar a arquitetura e o domínio.
+MIT. See [`LICENSE`](LICENSE). Study project: feel free to adapt the architecture and domain.

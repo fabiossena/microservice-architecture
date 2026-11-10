@@ -9,17 +9,17 @@ export const PAYMENT_STATUS = Object.freeze({
 export function decidePayment(amount, limit) {
   const value = Number(amount);
   if (!Number.isFinite(value) || value <= 0) {
-    return { status: PAYMENT_STATUS.DECLINED, reason: 'Valor inválido para cobrança' };
+    return { status: PAYMENT_STATUS.DECLINED, reason: 'Invalid charge amount' };
   }
   if (value > limit) {
     return {
       status: PAYMENT_STATUS.DECLINED,
-      reason: `Valor acima do limite de simulação (R$ ${Number(limit).toFixed(2)})`
+      reason: `Amount above the simulation limit (${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(limit)})`
     };
   }
-  return { status: PAYMENT_STATUS.APPROVED, reason: 'Transação aprovada pela adquirente simulada' };
+  return { status: PAYMENT_STATUS.APPROVED, reason: 'Transaction approved by the simulated acquirer' };
 }
 
 export function formatMoney(value) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value) || 0);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(value) || 0);
 }

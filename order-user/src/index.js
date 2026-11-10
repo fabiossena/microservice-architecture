@@ -24,7 +24,7 @@ broker.subscribe(config.queue, ['notification.created'], async (event) => {
     message: event.message,
     payload: {
       ...(event.payload || {}),
-      title: event.payload?.title || 'Notificação',
+      title: event.payload?.title || 'Notification',
       severity: event.payload?.severity || 'info'
     },
     occurredAt: event.occurredAt,
@@ -54,13 +54,13 @@ heartbeat.unref?.();
 broker.start().catch((err) => logger.error(`[order-user] ${err.message}`));
 
 async function shutdown(signal) {
-  logger.info(`[order-user] recebido ${signal}, encerrando...`);
+  logger.info(`[order-user] received ${signal}, shutting down...`);
   clearInterval(heartbeat);
   for (const client of sseClients) {
     try {
       client.end();
     } catch {
-      // ignora
+      // ignore
     }
   }
   server.close();

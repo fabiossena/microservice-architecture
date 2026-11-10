@@ -1,9 +1,9 @@
 ﻿<!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Orders Lab · Operação</title>
+  <title>Orders Lab · Operations</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="manage-page">
@@ -12,14 +12,14 @@
       <div class="brand-mark admin">OP</div>
       <div>
         <strong>Orders Lab</strong>
-        <span>Central da operação · filas e respostas</span>
+        <span>Operations center · queues and replies</span>
       </div>
     </div>
     <div class="topbar-actions">
-      <span id="connection" class="status-pill offline" title="Conexão em tempo real">
-        <span class="dot"></span><span id="connection-label">Conectando</span>
+      <span id="connection" class="status-pill offline" title="Real-time connection">
+        <span class="dot"></span><span id="connection-label">Connecting</span>
       </span>
-      <a class="btn ghost" href="http://localhost:8071" target="_blank" rel="noopener">Portal do cliente</a>
+      <a class="btn ghost" href="http://localhost:8071" target="_blank" rel="noopener">Customer portal</a>
       <a class="btn ghost" href="http://localhost:8070" target="_blank" rel="noopener">Dashboard</a>
     </div>
   </header>
@@ -29,60 +29,60 @@
       <div class="card">
         <div class="card-heading compact">
           <div>
-            <span class="eyebrow">Contexto de atendimento</span>
-            <h1>Responder operação</h1>
+            <span class="eyebrow">Service context</span>
+            <h1>Handle operations</h1>
           </div>
-          <span class="live-tag"><span class="dot"></span> ao vivo</span>
+          <span class="live-tag"><span class="dot"></span> live</span>
         </div>
 
         <div class="field">
-          <label for="operator">Operador</label>
-          <input id="operator" maxlength="40" placeholder="Ex.: Operação" />
+          <label for="operator">Operator</label>
+          <input id="operator" maxlength="40" placeholder="e.g. Operations" />
         </div>
         <div class="field">
-          <label for="target-user">Usuário de destino</label>
+          <label for="target-user">Target user</label>
           <div class="input-row">
-            <input id="target-user" list="target-users" maxlength="40" placeholder="Nome do cliente" />
+            <input id="target-user" list="target-users" maxlength="40" placeholder="Customer name" />
             <datalist id="target-users">
-              <option value="Ana"></option>
-              <option value="Bruno"></option>
-              <option value="Carla"></option>
-              <option value="Diego"></option>
-              <option value="Elena"></option>
+              <option value="Alice"></option>
+              <option value="Bob"></option>
+              <option value="Carol"></option>
+              <option value="Daniel"></option>
+              <option value="Emma"></option>
             </datalist>
           </div>
         </div>
         <div class="field">
-          <label for="order-id">Código do pedido</label>
-          <input id="order-id" maxlength="80" placeholder="Copie de uma mensagem ou cole o id" />
-          <p class="hint" id="selection-hint">Selecione uma mensagem na fila para preencher usuário e pedido.</p>
+          <label for="order-id">Order code</label>
+          <input id="order-id" maxlength="80" placeholder="Copy it from a message or paste the id" />
+          <p class="hint" id="selection-hint">Select a message in the queue to fill in the user and order.</p>
         </div>
 
         <div class="manager-actions">
-          <button class="btn success" data-manage-action="approve-order" type="button">Aprovar pedido</button>
-          <button class="btn danger" data-manage-action="cancel-order" type="button">Cancelar pedido</button>
-          <button class="btn" data-manage-action="refund-payment" type="button">Reembolsar pagamento</button>
-          <button class="btn" data-manage-action="dispatch-delivery" type="button">Despachar entrega</button>
+          <button class="btn success" data-manage-action="approve-order" type="button">Approve order</button>
+          <button class="btn danger" data-manage-action="cancel-order" type="button">Cancel order</button>
+          <button class="btn" data-manage-action="refund-payment" type="button">Refund payment</button>
+          <button class="btn" data-manage-action="dispatch-delivery" type="button">Dispatch delivery</button>
         </div>
       </div>
 
       <div class="card">
         <div class="card-heading compact">
           <div>
-            <span class="eyebrow">Catálogo</span>
-            <h2>Reposição de estoque</h2>
+            <span class="eyebrow">Catalog</span>
+            <h2>Stock restock</h2>
           </div>
         </div>
         <div class="field">
           <label for="restock-sku">Item</label>
           <select id="restock-sku"></select>
-          <p class="hint" id="catalog-hint">Carregando catálogo...</p>
+          <p class="hint" id="catalog-hint">Loading catalog...</p>
         </div>
         <div class="field inline-field">
-          <label for="restock-quantity">Quantidade</label>
+          <label for="restock-quantity">Quantity</label>
           <div class="inline-control">
             <input id="restock-quantity" type="number" min="1" max="999" value="10" />
-            <button class="btn" data-manage-action="restock" type="button">Repor estoque</button>
+            <button class="btn" data-manage-action="restock" type="button">Restock stock</button>
           </div>
         </div>
       </div>
@@ -90,43 +90,43 @@
       <div class="card">
         <div class="card-heading compact">
           <div>
-            <span class="eyebrow">Mensageria de retorno</span>
-            <h2>Responder ao cliente</h2>
+            <span class="eyebrow">Return messaging</span>
+            <h2>Reply to customer</h2>
           </div>
         </div>
         <div class="field">
-          <label for="reply-text">Mensagem</label>
-          <textarea id="reply-text" rows="4" maxlength="500" placeholder="Escreva uma resposta para o usuário selecionado..."></textarea>
+          <label for="reply-text">Message</label>
+          <textarea id="reply-text" rows="4" maxlength="500" placeholder="Write a reply for the selected user..."></textarea>
         </div>
         <div class="response-actions">
-          <button class="btn primary wide" data-manage-action="reply-user" type="button">Enviar resposta ao usuário</button>
-          <button class="btn wide" data-manage-action="broadcast" type="button">Enviar comunicado geral</button>
+          <button class="btn primary wide" data-manage-action="reply-user" type="button">Send reply to customer</button>
+          <button class="btn wide" data-manage-action="broadcast" type="button">Send general announcement</button>
         </div>
-        <p class="hint">A resposta é publicada em <code>manager.reply</code> e passa pelo notify-service antes de chegar ao cliente.</p>
+        <p class="hint">The reply is published to <code>manager.reply</code> and goes through notify-service before reaching the customer.</p>
       </div>
     </section>
 
     <section class="column right">
       <div class="queue-header">
         <div>
-          <span class="eyebrow">Tráfego do exchange <code>orders</code></span>
-          <h2>Fila da operação</h2>
+          <span class="eyebrow">Exchange traffic <code>orders</code></span>
+          <h2>Operations queue</h2>
         </div>
         <div class="queue-counts">
-          <span class="count-chip"><strong id="user-count">0</strong> ações</span>
-          <span class="count-chip"><strong id="system-count">0</strong> eventos</span>
-          <span class="count-chip"><strong id="sent-count">0</strong> enviadas</span>
+          <span class="count-chip"><strong id="user-count">0</strong> user actions</span>
+          <span class="count-chip"><strong id="system-count">0</strong> events</span>
+          <span class="count-chip"><strong id="sent-count">0</strong> sent</span>
         </div>
       </div>
 
       <div class="card queue-card manager-feed-card">
         <div class="feed-toolbar">
           <div class="tabs" role="tablist">
-            <button class="tab active" data-filter="user" type="button" role="tab">Mensagens dos usuários</button>
-            <button class="tab" data-filter="system" type="button" role="tab">Eventos do sistema</button>
-            <button class="tab" data-filter="sent" type="button" role="tab">Enviadas</button>
+            <button class="tab active" data-filter="user" type="button" role="tab">Customer messages</button>
+            <button class="tab" data-filter="system" type="button" role="tab">System events</button>
+            <button class="tab" data-filter="sent" type="button" role="tab">Sent</button>
           </div>
-          <span class="queue-tag" id="feed-description">ações recebidas das filhas do order-user</span>
+          <span class="queue-tag" id="feed-description">actions received from order-user queues</span>
         </div>
         <div id="feed" class="message-list manager-feed"></div>
       </div>

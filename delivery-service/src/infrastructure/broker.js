@@ -4,8 +4,8 @@ import amqp from 'amqplib';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Pequeno cliente AMQP com reconexão automática.
- * Cada serviço publica e consome no exchange do tipo topic "orders".
+ * Small AMQP client with automatic reconnection.
+ * Every service publishes to and consumes from the durable topic exchange "orders".
  */
 export class Broker {
   constructor({ url, exchange, serviceName, logger = console }) {
@@ -35,17 +35,17 @@ export class Broker {
         try {
           this.connection = await amqp.connect(this.url);
           this.connection.on('error', (err) => {
-            this.logger.error(`[broker] erro de conexão: ${err.message}`);
+            this.logger.error(`[broker] connection error: ${err.message}`);
           });
           this.connection.on('close', () => {
             this.connected = false;
-            this.logger.warn('[broker] conexão encerrada');
+            this.logger.warn('[broker] connection closed');
             if (!this.closing) setTimeout(() => this.connect(), 3000).unref();
           });
 
           this.channel = await this.connection.createChannel();
           this.channel.on('error', (err) => {
-            this.logger.error(`[broker] erro no canal: ${err.message}`);
+            this.logger.error(`[broker] channel error: ${err.message}`);
           });
 
           await this.channel.assertExchange(this.exchange, 'topic', { durable: true });
@@ -55,11 +55,11 @@ export class Broker {
           }
 
           this.connected = true;
-          this.logger.info(`[broker] conectado em ${this.url.replace(/:[^:@/]+@/, ':***@')}`);
+          this.logger.info(`[broker] connected to ${this.url.replace(/:[^:@/]+@/, ':***@')}`);
           return;
         } catch (err) {
           this.connected = false;
-          this.logger.error(`[broker] tentativa de conexão falhou: ${err.message}`);
+          this.logger.error(`[broker] connection attempt failed: ${err.message}`);
           await sleep(3000);
         }
       }
@@ -81,7 +81,7 @@ export class Broker {
         await handler(event);
         this.channel.ack(message);
       } catch (err) {
-        this.logger.error(`[${queue}] falha ao processar mensagem: ${err.stack || err.message}`);
+        this.logger.error(`[${queue}] message processing failed: ${err.stack || err.message}`);
         this.channel.nack(message, false, false);
       }
     });
@@ -92,7 +92,7 @@ export class Broker {
     this.subscriptions.push(subscription);
     if (this.channel) {
       this.setupSubscription(subscription).catch((err) => {
-        this.logger.error(`[broker] falha ao assinar ${queue}: ${err.message}`);
+        this.logger.error(`[broker] failed to subscribe ${queue}: ${err.message}`);
       });
     }
     return subscription;
@@ -100,7 +100,7 @@ export class Broker {
 
   async publish(type, { user = null, message = '', payload = {}, correlationId = null } = {}) {
     if (!this.channel || !this.connected) {
-      throw new Error('Broker indisponível para publicar');
+      throw new Error('Broker is not available to publish');
     }
 
     const event = {
@@ -130,7 +130,7 @@ export class Broker {
       await this.channel?.close();
       await this.connection?.close();
     } catch {
-      // encerramento best-effort
+      // best-effort shutdown
     }
     this.connected = false;
   }

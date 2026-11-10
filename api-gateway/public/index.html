@@ -1,5 +1,5 @@
 ﻿<!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,11 +12,11 @@
       <div class="brand-mark">OL</div>
       <div>
         <strong>Orders Lab</strong>
-        <span>Microservices Architecture · ambiente local</span>
+        <span>Microservices Architecture · local environment</span>
       </div>
     </div>
     <div class="topbar-actions">
-      <span id="refresh-state" class="status-pill"><span class="dot"></span><span id="refresh-label">Atualizando</span></span>
+      <span id="refresh-state" class="status-pill"><span class="dot"></span><span id="refresh-label">Refreshing</span></span>
       <a class="btn ghost" href="https://github.com/fabiossena/microservice-architecture" target="_blank" rel="noopener">GitHub</a>
     </div>
   </header>
@@ -25,20 +25,20 @@
     <section class="hero">
       <div>
         <span class="eyebrow">API Gateway · dashboard</span>
-        <h1>Um pedido, vários serviços,<br />uma coreografia observável.</h1>
+        <h1>One order, many services,<br />one observable workflow.</h1>
         <p>
-          Cliente, operação, catálogo, pagamento, entrega e notificação trocando eventos
-          por um exchange <code>topic</code> no RabbitMQ. Cada serviço tem seu próprio SQLite.
+          Customer, operations, catalog, payment, delivery, and notification exchanging events
+          through a RabbitMQ <code>topic</code> exchange. Every service owns its SQLite database.
         </p>
         <div class="hero-actions">
-          <a class="btn accent" href="/user/" target="_blank" rel="noopener">Abrir portal do cliente</a>
-          <a class="btn primary" href="/manage/" target="_blank" rel="noopener">Abrir central da operação</a>
+          <a class="btn accent" href="/user/" target="_blank" rel="noopener">Open customer portal</a>
+          <a class="btn primary" href="/manage/" target="_blank" rel="noopener">Open operations center</a>
         </div>
       </div>
-      <div class="hero-diagram" aria-label="Fluxo de eventos">
-        <div class="diagram-node client">order-user<small>publica ações</small></div>
+      <div class="hero-diagram" aria-label="Event flow">
+        <div class="diagram-node client">order-user<small>publishes actions</small></div>
         <div class="diagram-arrow">→</div>
-        <div class="diagram-node broker">RabbitMQ<small>exchange orders</small></div>
+        <div class="diagram-node broker">RabbitMQ<small>orders exchange</small></div>
         <div class="diagram-arrow">→</div>
         <div class="diagram-services">
           <span>orders</span>
@@ -52,9 +52,9 @@
 
     <section class="summary-grid">
       <article class="summary-card">
-        <span class="summary-label">Serviços online</span>
+        <span class="summary-label">Services online</span>
         <strong id="services-summary">—</strong>
-        <small>health checks HTTP</small>
+        <small>HTTP health checks</small>
       </article>
       <article class="summary-card">
         <span class="summary-label">RabbitMQ</span>
@@ -62,14 +62,14 @@
         <small id="rabbit-version">management API</small>
       </article>
       <article class="summary-card">
-        <span class="summary-label">Mensagens em fila</span>
+        <span class="summary-label">Messages in queues</span>
         <strong id="messages-summary">—</strong>
         <small>ready + unacked</small>
       </article>
       <article class="summary-card">
-        <span class="summary-label">Consumidores</span>
+        <span class="summary-label">Consumers</span>
         <strong id="consumers-summary">—</strong>
-        <small>filas conectadas</small>
+        <small>connected queues</small>
       </article>
     </section>
 
@@ -77,7 +77,7 @@
       <article class="panel">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">Acesso rápido</span>
+            <span class="eyebrow">Quick access</span>
             <h2>Interfaces</h2>
           </div>
         </div>
@@ -85,8 +85,8 @@
           <a class="link-card" href="/user/" target="_blank" rel="noopener">
             <span class="link-index">01</span>
             <div>
-              <strong>Portal do cliente</strong>
-              <p>Escolha um nome por aba, faça pedidos, consulte status e receba notificações em tempo real.</p>
+              <strong>Customer portal</strong>
+              <p>Choose a name per tab, place orders, check status, and receive real-time notifications.</p>
               <code>localhost:8070/user/</code>
             </div>
             <span class="link-arrow">↗</span>
@@ -94,8 +94,8 @@
           <a class="link-card" href="/manage/" target="_blank" rel="noopener">
             <span class="link-index">02</span>
             <div>
-              <strong>Central da operação</strong>
-              <p>Veja as ações dos clientes, aprove, cancele, reembolse, despache e responda mensagens.</p>
+              <strong>Operations center</strong>
+              <p>See customer actions, approve, cancel, refund, dispatch, and reply to messages.</p>
               <code>localhost:8070/manage/</code>
             </div>
             <span class="link-arrow">↗</span>
@@ -104,7 +104,7 @@
             <span class="link-index">03</span>
             <div>
               <strong>RabbitMQ Management</strong>
-              <p>Inspecione o exchange, as filas, bindings e o tráfego de mensagens.</p>
+              <p>Inspect the exchange, queues, bindings, and message traffic.</p>
               <code>localhost:15672 · orders / orders123</code>
             </div>
             <span class="link-arrow">↗</span>
@@ -115,28 +115,28 @@
       <article class="panel">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">Coreografia</span>
-            <h2>Fluxo principal</h2>
+            <span class="eyebrow">Choreography</span>
+            <h2>Main flow</h2>
           </div>
-          <span class="queue-tag">eventos de domínio</span>
+          <span class="queue-tag">domain events</span>
         </div>
         <ol class="flow">
-          <li><span>1</span><div><strong>Cliente faz o pedido</strong><code>user.order.place</code></div></li>
-          <li><span>2</span><div><strong>Pedido criado e aprovado</strong><code>order.created → order.confirmed</code></div></li>
-          <li><span>3</span><div><strong>Estoque reservado</strong><code>catalog.reserved</code></div></li>
-          <li><span>4</span><div><strong>Pagamento processado</strong><code>payment.approved</code></div></li>
-          <li><span>5</span><div><strong>Entrega designada e concluída</strong><code>delivery.assigned → delivered</code></div></li>
-          <li><span>6</span><div><strong>Notificação entregue à UI</strong><code>notification.created</code></div></li>
+          <li><span>1</span><div><strong>Customer places an order</strong><code>user.order.place</code></div></li>
+          <li><span>2</span><div><strong>Order created and approved</strong><code>order.created → order.confirmed</code></div></li>
+          <li><span>3</span><div><strong>Stock reserved</strong><code>catalog.reserved</code></div></li>
+          <li><span>4</span><div><strong>Payment processed</strong><code>payment.approved</code></div></li>
+          <li><span>5</span><div><strong>Delivery assigned and completed</strong><code>delivery.assigned → delivered</code></div></li>
+          <li><span>6</span><div><strong>Notification delivered to the UI</strong><code>notification.created</code></div></li>
         </ol>
-        <p class="panel-note">Cancelamentos disparam compensações: estoque liberado e estorno automático.</p>
+        <p class="panel-note">Cancellations trigger compensations: stock is released and payment is refunded automatically.</p>
       </article>
     </section>
 
     <section class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Observabilidade</span>
-          <h2>Serviços</h2>
+          <span class="eyebrow">Observability</span>
+          <h2>Services</h2>
         </div>
         <span class="muted" id="last-update">—</span>
       </div>
@@ -146,8 +146,8 @@
     <section class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Mensageria</span>
-          <h2>Filas do exchange <code>orders</code></h2>
+          <span class="eyebrow">Messaging</span>
+          <h2>Queues on exchange <code>orders</code></h2>
         </div>
         <span class="muted" id="queues-update">—</span>
       </div>
@@ -155,17 +155,17 @@
         <table>
           <thead>
             <tr>
-              <th>Fila</th>
-              <th>Estado</th>
-              <th class="num">Prontas</th>
-              <th class="num">Não confirmadas</th>
-              <th class="num">Consumidores</th>
+              <th>Queue</th>
+              <th>State</th>
+              <th class="num">Ready</th>
+              <th class="num">Unacked</th>
+              <th class="num">Consumers</th>
               <th class="num">Publish/s</th>
               <th class="num">Deliver/s</th>
             </tr>
           </thead>
           <tbody id="queues">
-            <tr><td colspan="7" class="empty-cell">Consultando RabbitMQ...</td></tr>
+            <tr><td colspan="7" class="empty-cell">Loading RabbitMQ queues...</td></tr>
           </tbody>
         </table>
       </div>
@@ -173,7 +173,7 @@
   </main>
 
   <footer class="footer">
-    <span>Orders Lab · simulação local de arquitetura orientada a eventos</span>
+    <span>Orders Lab · local event-driven architecture simulation</span>
     <span>Docker Compose · RabbitMQ · SQLite · Node.js</span>
   </footer>
 

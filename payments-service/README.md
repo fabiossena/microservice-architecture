@@ -1,14 +1,14 @@
 # payments-service
 
-Adquirente simulada. O limite padrão de aprovação é `PAYMENT_LIMIT=1000`, configurável no Compose.
+Simulated payment acquirer. The default approval limit is `PAYMENT_LIMIT=1000`, configurable in Compose.
 
-- Consome: `catalog.reserved`, `order.cancelled`, `user.payment.retry`, `manager.payment.refund`
-- Publica: `payment.approved`, `payment.declined`, `payment.refunded`, `payment.info`, `payment.retry_failed`
-- HTTP de apoio: `GET /health`, `GET /payments`
-- Banco: SQLite com uma cobrança por `order_id`.
+- Consumes: `catalog.reserved`, `order.cancelled`, `user.payment.retry`, `manager.payment.refund`
+- Publishes: `payment.approved`, `payment.declined`, `payment.refunded`, `payment.info`, `payment.retry_failed`
+- Support HTTP: `GET /health`, `GET /payments`
+- Database: SQLite with one charge per `order_id`.
 
-Regras de simulação:
+Simulation rules:
 
-1. Até R$ 1.000 o cartão é aprovado; acima disso é recusado.
-2. `user.payment.retry` aprova uma cobrança que estava `DECLINED`.
-3. Cancelamento de pedido com pagamento aprovado gera estorno automático.
+1. Up to $1,000 the card is approved; above that it is declined.
+2. `user.payment.retry` approves a charge that was `DECLINED`.
+3. Cancelling an order with an approved payment triggers an automatic refund.

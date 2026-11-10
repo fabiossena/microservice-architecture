@@ -1,10 +1,10 @@
 # notify-service
 
-Hub de notificações. Consome eventos de domínio e comandos de resposta da operação, persiste e publica `notification.created` para as views.
+Notification hub. It consumes domain events and operations reply commands, persists them, and publishes `notification.created` to the views.
 
-- Consome: `order.*`, `catalog.*`, `payment.*`, `delivery.*`, `manager.reply`, `manager.broadcast`
-- Publica: `notification.created`
-- HTTP de apoio: `GET /health`, `GET /notifications?user=Ana`
-- Banco: SQLite; a PK é o id do evento de origem, garantindo idempotência.
+- Consumes: `order.*`, `catalog.*`, `payment.*`, `delivery.*`, `manager.reply`, `manager.broadcast`
+- Publishes: `notification.created`
+- Support HTTP: `GET /health`, `GET /notifications?user=Alice`
+- Database: SQLite; the primary key is the source event id, ensuring idempotency.
 
-Este serviço desacopla "o que aconteceu" (evento de domínio) de "como avisar o usuário" (notificação). Em produção poderia enviar e-mail, push ou websocket, mantendo o mesmo contrato.
+This service decouples "what happened" (domain event) from "how to notify the user" (notification). In production it could send email, push, or WebSocket messages using the same contract.
