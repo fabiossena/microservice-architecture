@@ -20,7 +20,7 @@ Everything runs locally with **Docker Compose + RabbitMQ + SQLite**. Each micros
 | `catalog-service` | Catalog, stock, and per-order reservations. | 8094 |
 | `notify-service` | Turns domain events into per-user notifications. | 8095 |
 | `api-gateway` | Dashboard, proxy for the views, and aggregated health. | 8080 |
-| RabbitMQ | `orders` topic exchange, durable queues, and management UI. | 5672 / 15672 |
+| RabbitMQ | Single broker with the `orders` topic exchange, seven durable queues, and management UI. | 5672 / 15672 |
 
 **Shortcuts**
 
@@ -80,6 +80,12 @@ docker compose down -v   # also removes SQLite and RabbitMQ volumes
 ```
 
 All monetary values are displayed in **USD** (`$`) using `en-US` formatting.
+
+### UI refresh behavior
+
+- **Customer portal:** my inbox updates in real time through SSE, has a manual **Refresh** button, and reloads history from SQLite every **10 seconds**.
+- **Operations center:** the top customer board has one column per customer, each with its own message feed, send-message form, **Refresh** button, and automatic reload every **10 seconds**. The **Refresh all** button reloads every column immediately.
+- New customer names are discovered automatically from messages and added as new columns.
 
 ---
 
@@ -217,6 +223,17 @@ Exchange: `orders` (topic, durable).
 | `notify-service.events` | `order.*`, `catalog.*`, `payment.*`, `delivery.*`, `manager.reply`, `manager.broadcast` |
 | `order-user.notifications` | `notification.created` |
 | `order-manage.inbox` | `user.#`, `order.*`, `catalog.*`, `payment.*`, `delivery.*` |
+
+#### One broker, many queues
+
+The lab runs **one RabbitMQ broker**, not one broker per service or per queue:
+
+- The single container `orders-rabbitmq` hosts one durable `topic` exchange named `orders`.
+- The exchange routes each published event to all matching queues according to their bindings.
+- The seven queues above are passive storage owned by the broker. They do not "trigger RabbitMQ"; producers publish to the exchange, RabbitMQ routes, and each consumer reads and acknowledges its own queue.
+- Each microservice owns a separate SQLite database, but all services share the same RabbitMQ broker.
+- This is a consumer-group model: if one service is offline, its queue keeps the messages while the other services continue normally.
+- In production, the equivalent design is a RabbitMQ **cluster** with quorum queues, not a separate broker per queue. See [`platform-infra/README.md`](platform-infra/README.md).
 
 ---
 

@@ -32,6 +32,7 @@ No service reads another service's database. Integration happens exclusively thr
 - **Domain events** are facts published by their owners: `order.*`, `catalog.*`, `payment.*`, `delivery.*`.
 - **Notifications** translate events for the user: `notification.created`.
 - The routing key is the event type. The exchange is a `topic` exchange, enabling wildcard evolution (`order.*`).
+- The lab uses **one RabbitMQ broker** with one `orders` exchange and seven durable queues. Queues are passive; the broker routes copies of each event to matching queues. There is no broker per service or per queue.
 
 ## Happy path
 
